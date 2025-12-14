@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../config/api'; // 👈 IMPORT THE NEW CONFIG FILE
 import { signInWithPopup } from "firebase/auth";
-import { auth, googleProvider } from "../config/firebase"; // Import from your new config file
+import { auth, googleProvider } from "../config/firebase"; 
 
 const AuthContext = createContext();
 
@@ -14,7 +14,8 @@ export const AuthProvider = ({ children }) => {
     const checkLoggedIn = async () => {
       const token = localStorage.getItem('smartDietToken');
       if (token) {
-        axios.defaults.headers.common['x-auth-token'] = token;
+        // 👇 Use 'api' instead of 'axios'
+        api.defaults.headers.common['x-auth-token'] = token;
         const storedUser = localStorage.getItem('smartDietUser');
         if (storedUser) setUser(JSON.parse(storedUser));
       }
@@ -26,7 +27,8 @@ export const AuthProvider = ({ children }) => {
   // 2. REGISTER
   const register = async (name, email, password) => {
     try {
-      const res = await axios.post('/api/auth/register', { name, email, password });
+      // 👇 Use 'api.post'
+      const res = await api.post('/api/auth/register', { name, email, password });
       saveUserSession(res.data.token, res.data.user);
       return { success: true };
     } catch (error) {
@@ -37,7 +39,8 @@ export const AuthProvider = ({ children }) => {
   // 3. LOGIN (Email/Pass)
   const login = async (email, password) => {
     try {
-      const res = await axios.post('/api/auth/login', { email, password });
+      // 👇 Use 'api.post'
+      const res = await api.post('/api/auth/login', { email, password });
       saveUserSession(res.data.token, res.data.user);
       return { success: true };
     } catch (error) {
@@ -45,7 +48,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // 4. GOOGLE LOGIN (The new part)
+  // 4. GOOGLE LOGIN
   const googleLogin = async () => {
     try {
       // A. Open Google Popup
@@ -53,7 +56,8 @@ export const AuthProvider = ({ children }) => {
       const googleUser = result.user;
 
       // B. Send Google Data to YOUR Backend
-      const res = await axios.post('/api/auth/google', {
+      // 👇 Use 'api.post' (This solves the 404 error!)
+      const res = await api.post('/api/auth/google', {
         name: googleUser.displayName,
         email: googleUser.email,
         avatar: googleUser.photoURL,
@@ -74,14 +78,16 @@ export const AuthProvider = ({ children }) => {
   const saveUserSession = (token, userData) => {
     localStorage.setItem('smartDietToken', token);
     localStorage.setItem('smartDietUser', JSON.stringify(userData));
-    axios.defaults.headers.common['x-auth-token'] = token;
+    // 👇 Update the 'api' header
+    api.defaults.headers.common['x-auth-token'] = token;
     setUser(userData);
   };
 
   const logout = () => {
     localStorage.removeItem('smartDietToken');
     localStorage.removeItem('smartDietUser');
-    delete axios.defaults.headers.common['x-auth-token'];
+    // 👇 Remove header from 'api'
+    delete api.defaults.headers.common['x-auth-token'];
     setUser(null);
   };
 
