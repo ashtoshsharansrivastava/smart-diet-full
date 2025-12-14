@@ -38,7 +38,7 @@ app.use(express.json());
 app.use(cors({
   origin: [
     "http://localhost:5173",                 // Localhost (for testing)
-    "https://diet-ai-sigma.vercel.app"   // 👈 YOUR VERCEL FRONTEND URL (Add this later)
+    "https://smart-diet-full.vercel.app/"   // 👈 YOUR VERCEL FRONTEND URL (Add this later)
   ],
   credentials: true
 }));
