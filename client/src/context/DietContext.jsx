@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
-import axios from 'axios';
+import api from '../config/api'; // 👈 Uses your Render connection
 
 const DietContext = createContext();
 
@@ -28,17 +28,17 @@ export const DietProvider = ({ children }) => {
     setUserProfile(prev => ({ ...prev, [field]: value }));
   };
 
-  // --- NEW: API ACTIONS ---
+  // --- API ACTIONS ---
 
   // 1. Save the current plan to Database
   const savePlanToDB = async (planDetails) => {
     try {
-      const token = localStorage.getItem('smartDietToken');
-      if (!token) return; // Can't save if not logged in
+      // Note: We don't need to manually get the token here anymore.
+      // AuthContext attaches it to 'api' automatically.
 
       const payload = {
         title: planDetails.title,
-        planData: planDetails, // In future, this will be the full AI JSON
+        planData: planDetails, 
         macros: {
           calories: planDetails.calories,
           protein: "60g", // Mock data for now
@@ -47,12 +47,11 @@ export const DietProvider = ({ children }) => {
         }
       };
 
-      const res = await axios.post('/api/diet-plans', payload, {
-        headers: { 'x-auth-token': token }
-      });
+      // 👇 Changed axios.post to api.post
+      const res = await api.post('/api/diet-plans', payload);
       
       console.log("Plan Saved:", res.data);
-      // Optional: Add to local history immediately
+      // Add to local history immediately
       setPlanHistory(prev => [res.data, ...prev]);
 
     } catch (error) {
@@ -64,12 +63,10 @@ export const DietProvider = ({ children }) => {
   const fetchHistory = async () => {
     try {
       setLoadingHistory(true);
-      const token = localStorage.getItem('smartDietToken');
-      if (!token) return;
-
-      const res = await axios.get('/api/diet-plans', {
-        headers: { 'x-auth-token': token }
-      });
+      
+      // 👇 Changed axios.get to api.get
+      const res = await api.get('/api/diet-plans');
+      
       setPlanHistory(res.data);
       setLoadingHistory(false);
     } catch (error) {
@@ -81,10 +78,9 @@ export const DietProvider = ({ children }) => {
   // 3. Delete Plan
   const deletePlan = async (id) => {
     try {
-      const token = localStorage.getItem('smartDietToken');
-      await axios.delete(`/api/diet-plans/${id}`, {
-        headers: { 'x-auth-token': token }
-      });
+      // 👇 Changed axios.delete to api.delete
+      await api.delete(`/api/diet-plans/${id}`);
+      
       // Remove from local state
       setPlanHistory(prev => prev.filter(plan => plan._id !== id));
     } catch (error) {
