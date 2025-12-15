@@ -61,10 +61,11 @@ const LandingPage = () => {
               <div className="mt-16 md:mt-24 relative w-full max-w-5xl">
                  {/* Glass container for the "App Preview" */}
                  <div className="relative rounded-2xl border border-slate-800 bg-slate-900/40 backdrop-blur-xl p-2 md:p-4 shadow-2xl">
+                    {/* ... inside the Glass container div ... */}
                     <img 
-                      src="https://images.unsplash.com/photo-1543362906-ac1b16c6756c?q=80&w=1974&auto=format&fit=crop" 
-                      alt="AI Analysis Dashboard" 
-                      className="w-full rounded-xl opacity-80"
+                    src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=2000" 
+                    alt="AI Analysis Dashboard" 
+                    className="w-full rounded-xl opacity-80 shadow-lg"
                     />
                     
                     {/* Floating Data Card 1 */}
