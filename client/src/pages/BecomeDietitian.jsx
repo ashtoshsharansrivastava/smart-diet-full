@@ -1,54 +1,65 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
-import { ArrowRight, Award, DollarSign, Calendar, Check } from 'lucide-react';
-import api from '../config/api'; 
+import { Crown, DollarSign, Clock, Calendar, Check, Link as LinkIcon, AlertTriangle } from 'lucide-react';
+import axios from 'axios';
 
 const BecomeDietitian = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  
-  // Form State
+  const [error, setError] = useState(null); // To show error messages
+
   const [formData, setFormData] = useState({
     specialization: 'General Nutrition',
-    experience: '',
-    hourlyRate: '',
+    experience: 0,
+    hourlyRate: 500,
     bio: '',
-    availability: [], // Stores selected days
-    calendlyLink: ''
+    availableDays: [],
+    meetingUrl: ''
   });
 
-  const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-  // Toggle Logic
   const toggleDay = (day) => {
-    setFormData(prev => {
-      const currentDays = prev.availability;
-      if (currentDays.includes(day)) {
-        return { ...prev, availability: currentDays.filter(d => d !== day) }; // Remove
-      } else {
-        return { ...prev, availability: [...currentDays, day] }; // Add
-      }
-    });
+    setFormData(prev => ({
+      ...prev,
+      availableDays: prev.availableDays.includes(day)
+        ? prev.availableDays.filter(d => d !== day)
+        : [...prev.availableDays, day]
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
-    if (formData.availability.length === 0) {
-        alert("Please select at least one available day.");
-        setLoading(false);
-        return;
-    }
+    setError(null);
 
     try {
-      await api.post('/api/dietitians/onboard', formData);
-      alert("Application Submitted! You are now listed.");
-      navigate('/dietitians');
-    } catch (error) {
-      console.error(error);
-      alert("Failed to join. Please try again.");
+      // 1. Get the Token from Local Storage
+      const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+      
+      if (!userInfo || !userInfo.token) {
+        throw new Error("You must be logged in to apply.");
+      }
+
+      const config = {
+        headers: {
+          Authorization: `Bearer ${userInfo.token}`, // 👈 CRITICAL: This fixes the 401 Error
+        },
+      };
+
+      // 2. Send the Request
+      const BACKEND_URL = "https://smart-diet-full.onrender.com";
+      await axios.post(`${BACKEND_URL}/api/dietitians/onboard`, formData, config);
+
+      // 3. Success! Redirect to Dashboard
+      alert("Application Submitted! Status: Pending Approval.");
+      navigate('/dashboard');
+
+    } catch (err) {
+      console.error("Application Error:", err);
+      // Show readable error message
+      setError(err.response?.data?.message || err.message || "Failed to submit application");
     } finally {
       setLoading(false);
     }
@@ -56,127 +67,133 @@ const BecomeDietitian = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-slate-950 font-display text-slate-200 py-12 px-4">
-        <div className="max-w-3xl mx-auto">
+      <div className="min-h-screen bg-slate-950 py-10 px-4 font-display text-slate-200">
+        <div className="max-w-2xl mx-auto">
           
           <div className="text-center mb-10">
-            <h1 className="text-4xl font-extrabold text-white mb-2">Join as an <span className="text-emerald-400">Expert</span></h1>
+            <h1 className="text-3xl font-extrabold text-white mb-2">
+              Join as an <span className="text-emerald-400">Expert</span>
+            </h1>
             <p className="text-slate-400">Set your schedule and start consulting.</p>
           </div>
 
-          <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-3xl p-8 shadow-2xl">
-            <form onSubmit={handleSubmit} className="space-y-8">
-              
-              {/* Row 1: Spec & Exp */}
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-xs font-bold text-slate-400 mb-2 uppercase">Specialization</label>
-                  <select 
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-white outline-none focus:border-emerald-500"
-                    value={formData.specialization}
-                    onChange={e => setFormData({...formData, specialization: e.target.value})}
-                  >
-                    <option>General Nutrition</option>
-                    <option>Diabetes & Metabolic</option>
-                    <option>PCOS & Hormonal</option>
-                    <option>Sports & Performance</option>
-                    <option>Gut Health</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-400 mb-2 uppercase">Experience (Years)</label>
-                  <div className="relative">
-                    <Award className="absolute top-4 left-4 text-emerald-500" size={18} />
-                    <input 
-                      type="number" 
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 pl-12 text-white outline-none focus:border-emerald-500"
-                      placeholder="e.g. 5"
-                      value={formData.experience}
-                      onChange={e => setFormData({...formData, experience: e.target.value})}
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
+          {/* Error Banner */}
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/50 text-red-400 p-4 rounded-xl mb-6 flex items-center gap-3">
+              <AlertTriangle size={20} />
+              <p>{error}</p>
+            </div>
+          )}
 
-              {/* Row 2: Rate & Bio */}
-              <div className="grid md:grid-cols-2 gap-6">
-                 <div>
-                  <label className="block text-xs font-bold text-slate-400 mb-2 uppercase">Hourly Rate (₹)</label>
-                  <div className="relative">
-                    <DollarSign className="absolute top-4 left-4 text-emerald-500" size={18} />
-                    <input 
-                      type="number" 
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 pl-12 text-white outline-none focus:border-emerald-500"
-                      placeholder="e.g. 800"
-                      value={formData.hourlyRate}
-                      onChange={e => setFormData({...formData, hourlyRate: e.target.value})}
-                      required
-                    />
-                  </div>
-                </div>
-                <div>
-                   <label className="block text-xs font-bold text-slate-400 mb-2 uppercase">Short Bio</label>
-                   <textarea 
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-white outline-none focus:border-emerald-500 h-[58px] resize-none"
-                    placeholder="e.g. Expert in Keto..."
-                    value={formData.bio}
-                    onChange={e => setFormData({...formData, bio: e.target.value})}
-                    required
-                  ></textarea>
-                </div>
-              </div>
-
-              {/* --- NEW: DAY SELECTOR --- */}
+          <form onSubmit={handleSubmit} className="bg-slate-900/50 backdrop-blur-md p-8 rounded-3xl border border-slate-800 shadow-xl space-y-6">
+            
+            {/* Specialization & Experience */}
+            <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-xs font-bold text-emerald-400 mb-4 uppercase flex items-center gap-2">
-                   <Calendar size={16}/> Select Available Days
-                </label>
-                
-                <div className="flex flex-wrap gap-3">
-                    {daysOfWeek.map((day) => {
-                        const isSelected = formData.availability.includes(day);
-                        return (
-                            <button
-                                key={day}
-                                type="button"
-                                onClick={() => toggleDay(day)}
-                                className={`px-5 py-3 rounded-xl text-sm font-bold border transition-all flex items-center gap-2 ${
-                                    isSelected
-                                    ? 'bg-emerald-500 text-slate-950 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.4)] scale-105'
-                                    : 'bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-600 hover:text-white'
-                                }`}
-                            >
-                                {isSelected && <Check size={14} strokeWidth={4} />}
-                                {day}
-                            </button>
-                        );
-                    })}
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Specialization</label>
+                <select 
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:border-emerald-500 outline-none"
+                  value={formData.specialization}
+                  onChange={(e) => setFormData({...formData, specialization: e.target.value})}
+                >
+                  <option>General Nutrition</option>
+                  <option>Sports Dietetics</option>
+                  <option>Weight Loss</option>
+                  <option>Keto Expert</option>
+                  <option>Vegan Nutrition</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Experience (Years)</label>
+                <div className="relative">
+                  <Crown size={16} className="absolute top-3.5 left-4 text-emerald-500" />
+                  <input 
+                    type="number" 
+                    required
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 pl-12 text-white focus:border-emerald-500 outline-none"
+                    value={formData.experience}
+                    onChange={(e) => setFormData({...formData, experience: Number(e.target.value)})}
+                  />
                 </div>
               </div>
+            </div>
 
-              {/* Optional Link (Just in case) */}
-              <div className="pt-6 border-t border-slate-800 opacity-50 hover:opacity-100 transition-opacity">
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase">Meeting Link (Optional)</label>
+            {/* Rate & Bio */}
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Hourly Rate (₹)</label>
+                <div className="relative">
+                  <DollarSign size={16} className="absolute top-3.5 left-4 text-emerald-500" />
                   <input 
-                    type="url" 
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-400 text-sm focus:text-white outline-none focus:border-slate-600"
-                    placeholder="Zoom / Google Meet / Calendly URL"
-                    value={formData.calendlyLink}
-                    onChange={e => setFormData({...formData, calendlyLink: e.target.value})}
+                    type="number" 
+                    required
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 pl-12 text-white focus:border-emerald-500 outline-none"
+                    value={formData.hourlyRate}
+                    onChange={(e) => setFormData({...formData, hourlyRate: Number(e.target.value)})}
                   />
+                </div>
               </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Short Bio</label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="I specialize in..."
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:border-emerald-500 outline-none"
+                  value={formData.bio}
+                  onChange={(e) => setFormData({...formData, bio: e.target.value})}
+                />
+              </div>
+            </div>
 
-              <button 
-                type="submit" 
-                disabled={loading}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all flex items-center justify-center gap-2"
-              >
-                {loading ? 'Processing...' : <>Complete Profile <ArrowRight size={20} /></>}
-              </button>
+            {/* Available Days */}
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-3 flex items-center gap-2">
+                <Calendar size={14} /> Select Available Days
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {days.map(day => (
+                  <button
+                    key={day}
+                    type="button"
+                    onClick={() => toggleDay(day)}
+                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all border ${
+                      formData.availableDays.includes(day)
+                        ? 'bg-emerald-500 text-slate-950 border-emerald-500'
+                        : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-emerald-500/50'
+                    }`}
+                  >
+                    {formData.availableDays.includes(day) && <Check size={12} className="inline mr-1" />}
+                    {day}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-            </form>
-          </div>
+            {/* Meeting URL */}
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Meeting Link (Optional)</label>
+              <div className="relative">
+                <LinkIcon size={16} className="absolute top-3.5 left-4 text-slate-500" />
+                <input 
+                  type="url" 
+                  placeholder="Zoom / Google Meet / Calendly URL"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 pl-12 text-white focus:border-emerald-500 outline-none"
+                  value={formData.meetingUrl}
+                  onChange={(e) => setFormData({...formData, meetingUrl: e.target.value})}
+                />
+              </div>
+            </div>
+
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] disabled:opacity-50"
+            >
+              {loading ? "Submitting Application..." : "Complete Profile →"}
+            </button>
+
+          </form>
         </div>
       </div>
     </Layout>

@@ -91,6 +91,16 @@ const Navbar = () => {
                       <Crown size={16} className="text-amber-400" />
                       Join as Expert
                     </Link>
+                    {/* DIETITIAN DASHBOARD LINK */}
+{user.role === 'dietitian' && (
+  <Link 
+    to="/dietitian/dashboard"
+    className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-300 hover:bg-slate-800 hover:text-blue-400 transition-colors border-b border-slate-800"
+  >
+    <Activity size={16} className="text-blue-400" />
+    Dietitian Workspace
+  </Link>
+)}
 
                     <button 
                       onClick={handleLogout}

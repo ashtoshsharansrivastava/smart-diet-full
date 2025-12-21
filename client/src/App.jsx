@@ -18,6 +18,7 @@ import Dietitians from './pages/Dietitians';
 import DietitianDetails from './pages/DietitianDetails';
 import BecomeDietitian from './pages/BecomeDietitian'; 
 import AdminDashboard from './pages/AdminDashboard'; // Ensure this file exists in this folder
+import DietitianDashboard from './pages/DietitianDashboard';
 
 // Security
 import ProtectedRoute from './components/auth/ProtectedRoute'; 
@@ -61,6 +62,14 @@ const App = () => {
               </ProtectedRoute>
             } 
           />
+          <Route 
+  path="/dietitian/dashboard" 
+  element={
+    <ProtectedRoute>
+      <DietitianDashboard />
+    </ProtectedRoute>
+  } 
+/>
           
           {/* 🔒 LOCKED: User must login before generating a plan */}
           <Route 
