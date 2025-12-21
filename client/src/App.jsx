@@ -1,61 +1,103 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
 import { DietProvider } from './context/DietContext';
-import { AuthProvider } from './context/AuthContext'; // 👈 Import this
-import Pricing from './pages/Pricing';   // 👈 Import this
-import Features from './pages/Features'; // 👈 Import this
-
-// Components
-import ProtectedRoute from './components/common/ProtectedRoute'; // 👈 Import this
 
 // Pages
 import LandingPage from './pages/LandingPage';
-import IntakeForm from './pages/IntakeForm';
-import DietChart from './pages/DietChart';
 import Login from './pages/Login';
+import Signup from './pages/Signup';
+import Dashboard from './pages/Dashboard';
+import IntakeForm from './pages/IntakeForm'; // The Generator
+import DietChart from './pages/DietChart';
 import RecipeDetails from './pages/RecipeDetails';
 import ShoppingList from './pages/ShoppingList';
-import Dashboard from './pages/Dashboard';
-import Signup from './pages/SignUp';
-import DietPlan from './pages/DietPlan';
+import Features from './pages/Features';
+import Pricing from './pages/Pricing';
 import Dietitians from './pages/Dietitians';
 import DietitianDetails from './pages/DietitianDetails';
-import BecomeDietitian from './pages/BecomeDIetitian';
-function App() {
-  return (
-    <AuthProvider> {/* 👈 Wrap everything in AuthProvider first */}
-      <DietProvider>
-        <Router>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/generate" element={<IntakeForm />} />
-            <Route path="/diet-plan" element={<DietChart />} />
-            <Route path="/recipe/:id" element={<RecipeDetails />} />
-            <Route path="/shopping-list" element={<ShoppingList />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/features" element={<Features />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/diet-plan" element={<DietPlan />} />
-            <Route path="/dietitians" element={<Dietitians />} />
-            <Route path="/dietitian/:id" element={<DietitianDetails />} />
-            <Route path="/dietitians/join" element={<BecomeDietitian />} />
+import BecomeDietitian from './pages/BecomeDietitian'; // 👈 IMPORT THIS
 
-            {/* Protected Routes (Only for logged in users) */}
-            <Route 
-              path="/dashboard" 
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } 
-            />
-          </Routes>
-        </Router>
+// Security
+import ProtectedRoute from './components/auth/ProtectedRoute'; // 👈 IMPORT THIS
+
+const App = () => {
+  return (
+    <AuthProvider>
+      <DietProvider>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/features" element={<Features />} />
+          <Route path="/pricing" element={<Pricing />} />
+          
+          {/* Dietitian Marketplace (Public) */}
+          <Route path="/dietitians" element={<Dietitians />} />
+          <Route path="/dietitians/:id" element={<DietitianDetails />} />
+          
+          {/* Protected Routes (Must be Logged In) */}
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* 🔒 LOCKED: User must login before generating a plan */}
+          <Route 
+            path="/generate" 
+            element={
+              <ProtectedRoute>
+                <IntakeForm />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/diet-plan" 
+            element={
+              <ProtectedRoute>
+                <DietChart />
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/shopping-list" 
+            element={
+              <ProtectedRoute>
+                <ShoppingList />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/recipe/:id" 
+            element={
+              <ProtectedRoute>
+                <RecipeDetails />
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* 🔒 LOCKED: Only logged in users can apply to be dietitians */}
+          <Route 
+            path="/dietitians/join" 
+            element={
+              <ProtectedRoute>
+                <BecomeDietitian />
+              </ProtectedRoute>
+            } 
+          />
+
+        </Routes>
       </DietProvider>
     </AuthProvider>
   );
-}
+};
 
 export default App;
