@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Activity, Menu, X, LogOut, LayoutDashboard, Crown, ChevronRight, Zap } from 'lucide-react';
+// 1. 👇 Added 'ShieldCheck' to imports for the Admin Icon
+import { Activity, Menu, X, LogOut, LayoutDashboard, Crown, ChevronRight, Zap, ShieldCheck } from 'lucide-react';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -61,14 +62,28 @@ const Navbar = () => {
                     </div>
                     <div className="text-left hidden lg:block">
                       <p className="text-xs font-bold text-white leading-none">{user.name}</p>
-                      <p className="text-[10px] text-emerald-500 font-mono mt-0.5">Free Tier</p>
+                      
+                      {/* 2. 👇 UPDATED: Check if Admin to show correct label */}
+                      <p className={`text-[10px] font-mono mt-0.5 ${user.role === 'admin' ? 'text-red-400' : 'text-emerald-500'}`}>
+                        {user.role === 'admin' ? 'Administrator' : 'Free Tier'}
+                      </p>
                     </div>
                   </button>
                   
-                  {/* 👇 THE DROPDOWN MENU - Updated with Join Link */}
+                  {/* 👇 THE DROPDOWN MENU */}
                   <div className="absolute right-0 top-full mt-4 w-56 bg-slate-900 rounded-xl shadow-[0_0_20px_rgba(0,0,0,0.5)] border border-slate-800 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0 overflow-hidden z-50">
                     
-                    {/* NEW LINK HERE */}
+                    {/* 3. 👇 NEW ADMIN LINK (Only visible if role is admin) */}
+                    {user.role === 'admin' && (
+                      <Link 
+                        to="/admin/dashboard"
+                        className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-300 hover:bg-slate-800 hover:text-red-400 transition-colors border-b border-slate-800"
+                      >
+                        <ShieldCheck size={16} className="text-red-500" />
+                        Admin Panel
+                      </Link>
+                    )}
+
                     <Link 
                       to="/dietitians/join"
                       className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-300 hover:bg-slate-800 hover:text-emerald-400 transition-colors border-b border-slate-800"
@@ -118,7 +133,14 @@ const Navbar = () => {
             <Link to="/pricing" className="flex items-center justify-between px-4 py-4 font-bold text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl transition-all" onClick={() => setIsOpen(false)}>
               Pricing <Crown size={16} className="text-amber-400" />
             </Link>
-             {/* NEW Mobile Link */}
+            
+            {/* 4. 👇 NEW ADMIN MOBILE LINK */}
+            {user && user.role === 'admin' && (
+              <Link to="/admin/dashboard" className="flex items-center gap-2 px-4 py-4 font-bold text-red-400 hover:bg-slate-800 rounded-xl transition-all" onClick={() => setIsOpen(false)}>
+                <ShieldCheck size={16} /> Admin Panel
+              </Link>
+            )}
+
             <Link to="/dietitians/join" className="flex items-center gap-2 px-4 py-4 font-bold text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl transition-all" onClick={() => setIsOpen(false)}>
               <Crown size={16} className="text-amber-400" /> Join as Expert
             </Link>
