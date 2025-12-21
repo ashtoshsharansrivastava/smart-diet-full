@@ -29,6 +29,7 @@ const Login = () => {
 
   // 🔵 GOOGLE LOGIN HANDLER (Logic moved INSIDE here)
   const handleGoogleLogin = async () => {
+    console.log("🔵 Google Login Triggered - Target:", "https://smart-diet-full.onrender.com"); // Add this line
     try {
       setLoading(true);
 
