@@ -3,24 +3,19 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Layout from '../components/layout/Layout';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
-import { googleProvider } from '../config/firebase';
+import axios from 'axios'; // 👈 IMPORT AXIOS
+import { signInWithPopup } from 'firebase/auth'; // 👈 IMPORT FIREBASE FUNCTION
+import { auth, googleProvider } from '../config/firebase';
 
-const Login = async () => {
+// ❌ Removed 'async' from here (React components cannot be async)
+const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, googleLogin } = useAuth();
+  const { login } = useAuth(); // We only need 'login' from context now
   const navigate = useNavigate();
-  const result = await signIntWithPopup(auth, googleProvider);
-  const user = result.user;
-  const BACKEND_URL = "https://smart-diet-full.onrender.com"
-  const { data } = await axios.post(`${BACKEND_URL}/api/users/google`, {
-  name: user.displayName,
-  email: user.email,
-  avatar: user.photoURL,
-  googleId: user.uid
-});
-localStorage.setItem('userInfo', JSON.stringify(data));
+
+  // 🟢 EMAIL LOGIN
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -30,13 +25,35 @@ localStorage.setItem('userInfo', JSON.stringify(data));
     setLoading(false);
   };
 
+  // 🔵 GOOGLE LOGIN (Logic Moved Inside Here)
   const handleGoogleLogin = async () => {
     try {
       setLoading(true);
-      const res = await googleLogin();
-      if (res.success) navigate('/dashboard');
+
+      // 1. Open Google Popup
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+
+      // 2. Define Backend URL
+      const BACKEND_URL = "https://smart-diet-full.onrender.com"; // 👈 DOUBLE CHECK THIS URL
+
+      // 3. Send to Backend to get 'Admin' or 'User' role
+      const { data } = await axios.post(`${BACKEND_URL}/api/users/google`, {
+        name: user.displayName,
+        email: user.email,
+        avatar: user.photoURL,
+        googleId: user.uid
+      });
+
+      // 4. Save User Data (including Role) to LocalStorage
+      localStorage.setItem('userInfo', JSON.stringify(data));
+
+      // 5. Navigate
+      navigate('/dashboard');
+
     } catch (err) {
-      console.error(err);
+      console.error("Google Login Error:", err);
+      alert("Google Login Failed. Check console for details.");
     } finally {
       setLoading(false);
     }
