@@ -8,7 +8,7 @@ const path = require('path');
 
 const connectDB = require('./config/db');
 const adminRoutes = require('./routes/adminRoutes');
-const userROutes = require('./routes/userRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 // 1. Connect to Database
 connectDB();
