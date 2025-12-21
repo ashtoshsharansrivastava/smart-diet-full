@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import Layout from '../components/layout/Layout';
 import { useAuth } from '../context/AuthContext';
 import { useDiet } from '../context/DietContext';
-import { User, Settings, Clock, Activity, Calendar, ArrowRight, Trash2, Zap } from 'lucide-react';
+import { User, Settings, Clock, Calendar, ArrowRight, Trash2, Zap } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
@@ -32,9 +32,17 @@ const Dashboard = () => {
             <div className="md:col-span-1 space-y-8">
               <div className="bg-slate-900/50 backdrop-blur-md p-6 rounded-3xl border border-slate-800 sticky top-24 shadow-xl">
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center text-emerald-400 font-bold text-2xl border border-slate-700 shadow-inner">
-                    {user?.name?.charAt(0) || <User />}
+                  {/* 👇 UPDATED: Shows Google Avatar if available */}
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center border border-slate-700 shadow-inner overflow-hidden bg-slate-800">
+                    {user?.avatar ? (
+                      <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-emerald-400 font-bold text-2xl">
+                        {user?.name?.charAt(0) || <User />}
+                      </span>
+                    )}
                   </div>
+                  
                   <div>
                     <h2 className="text-xl font-bold text-white">{user?.name}</h2>
                     <p className="text-xs font-bold text-emerald-400 bg-emerald-950/50 border border-emerald-500/30 px-2 py-0.5 rounded-full inline-block mt-1">Free Member</p>
@@ -66,7 +74,6 @@ const Dashboard = () => {
                  <Link to="/generate" className="relative z-10 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-6 py-3 rounded-xl font-bold transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105">
                     Initialize AI
                  </Link>
-                 {/* Decorative background glow */}
                  <div className="absolute right-0 top-0 w-64 h-64 bg-emerald-500/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-emerald-500/30 transition-all duration-700"></div>
               </div>
 
