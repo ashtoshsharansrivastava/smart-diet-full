@@ -47,9 +47,7 @@ app.use(cors({
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/diet-plans', require('./routes/dietPlans'));
 app.use('/api/recipes', require('./routes/recipes'));
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/diet-plans', require('./routes/dietPlans'));
-app.use('/api/recipes', require('./routes/recipes'));
+
 app.use('/api/dietitians', require('./routes/dietitians'));
 
 // ------------------
