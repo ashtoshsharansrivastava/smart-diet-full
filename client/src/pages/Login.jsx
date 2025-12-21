@@ -3,23 +3,24 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Layout from '../components/layout/Layout';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
-import axios from 'axios'; // 👈 Added missing import
+import { googleProvider } from '../config/firebase';
 
-// Firebase imports
-import { signInWithPopup } from 'firebase/auth'; // 👈 Added missing import
-import { auth, googleProvider } from '../config/firebase'; // 👈 Ensure 'auth' is exported from here too!
-
-// Removed 'async' from component definition
-const Login = () => {
+const Login = async () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  
-  // We still use login from context for normal email/pass
-  const { login } = useAuth(); 
+  const { login, googleLogin } = useAuth();
   const navigate = useNavigate();
-
-  // 🟢 NORMAL EMAIL LOGIN
+  const result = await signIntWithPopup(auth, googleProvider);
+  const user = result.user;
+  const BACKEND_URL = "https://smart-diet-full.onrender.com"
+  const { data } = await axios.post(`${BACKEND_URL}/api/users/google`, {
+  name: user.displayName,
+  email: user.email,
+  avatar: user.photoURL,
+  googleId: user.uid
+});
+localStorage.setItem('userInfo', JSON.stringify(data));
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -29,32 +30,13 @@ const Login = () => {
     setLoading(false);
   };
 
-  // 🔵 FIXED GOOGLE LOGIN
   const handleGoogleLogin = async () => {
     try {
       setLoading(true);
-
-      // 1. Trigger Firebase Popup
-      const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
-
-      // 2. Send data to YOUR backend (this gets the Role)
-      const { data } = await axios.post('/api/users/google', {
-        name: user.displayName,
-        email: user.email,
-        avatar: user.photoURL,
-        googleId: user.uid
-      });
-
-      // 3. Save the correct backend data (with role) to Local Storage
-      localStorage.setItem('userInfo', JSON.stringify(data));
-
-      // 4. Navigate to dashboard
-      navigate('/dashboard');
-
+      const res = await googleLogin();
+      if (res.success) navigate('/dashboard');
     } catch (err) {
-      console.error("Google Login Error:", err);
-      alert("Google Login Failed");
+      console.error(err);
     } finally {
       setLoading(false);
     }
