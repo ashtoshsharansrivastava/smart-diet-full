@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { protect, admin } = require('../middleware/authmiddleware');
+const { protect, admin } = require('../middleware/authMiddleware');
 const User = require('../models/User');
 
 // @desc    Get all users who have applied to be dietitians
