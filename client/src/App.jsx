@@ -6,7 +6,7 @@ import { DietProvider } from './context/DietContext';
 // Pages
 import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
-import Signup from './pages/Signup';
+import Signup from './pages/SignUp';
 import Dashboard from './pages/Dashboard';
 import IntakeForm from './pages/IntakeForm'; // The Generator
 import DietChart from './pages/DietChart';
