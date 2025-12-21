@@ -1,8 +1,8 @@
-const asyncHandler = require('express-async-handler'); // Simple middleware for handling exceptions
+const asyncHandler = require('express-async-handler');
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
 
-// @desc    Auth user & get token
+// @desc    Auth user & get token (Email/Password Login)
 // @route   POST /api/users/login
 // @access  Public
 const authUser = asyncHandler(async (req, res) => {
@@ -10,13 +10,13 @@ const authUser = asyncHandler(async (req, res) => {
 
   const user = await User.findOne({ email });
 
-  // Check if user exists AND password matches (using the method from your User model)
   if (user && (await user.matchPassword(password))) {
     res.json({
       _id: user._id,
       name: user.name,
       email: user.email,
-      role: user.role, // <--- IMPORTANT: Sends 'admin', 'dietitian', or 'user' to frontend
+      avatar: user.avatar, 
+      role: user.role, // ✅ Sends role for standard login
       dietitianStatus: user.dietitianStatus, 
       token: generateToken(user._id),
     });
@@ -26,7 +26,7 @@ const authUser = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Register a new user
+// @desc    Register a new user (Email/Password Signup)
 // @route   POST /api/users
 // @access  Public
 const registerUser = asyncHandler(async (req, res) => {
@@ -39,7 +39,6 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new Error('User already exists');
   }
 
-  // Create user (Role defaults to 'user' in the Model)
   const user = await User.create({
     name,
     email,
@@ -51,12 +50,64 @@ const registerUser = asyncHandler(async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
-      role: user.role,
+      role: user.role, // Default is 'user'
       token: generateToken(user._id),
     });
   } else {
     res.status(400);
     throw new Error('Invalid user data');
+  }
+});
+
+// @desc    Google Auth (Login OR Register)
+// @route   POST /api/users/google
+// @access  Public
+// 🆕 THIS IS THE NEW FUNCTION YOU NEED
+const googleAuth = asyncHandler(async (req, res) => {
+  const { email, name, googleId, avatar } = req.body;
+
+  // 1. Check if this email already exists in your DB
+  const user = await User.findOne({ email });
+
+  if (user) {
+    // --- SCENARIO 1: USER EXISTS (LOGIN) ---
+    // Return their data from MongoDB, which includes their UPDATED ROLE (Admin/Dietitian)
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      avatar: user.avatar,
+      role: user.role, // 👈 CRITICAL: This pulls "admin" from your DB
+      dietitianStatus: user.dietitianStatus,
+      token: generateToken(user._id),
+    });
+  } else {
+    // --- SCENARIO 2: NEW USER (REGISTER) ---
+    // Create them with a random password since they use Google
+    const generatedPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+
+    const newUser = await User.create({
+      name,
+      email,
+      googleId,
+      avatar,
+      password: generatedPassword, 
+      role: 'user', // Default role
+    });
+
+    if (newUser) {
+      res.status(201).json({
+        _id: newUser._id,
+        name: newUser.name,
+        email: newUser.email,
+        avatar: newUser.avatar,
+        role: newUser.role,
+        token: generateToken(newUser._id),
+      });
+    } else {
+      res.status(400);
+      throw new Error('Invalid user data');
+    }
   }
 });
 
@@ -83,5 +134,6 @@ const getUserProfile = asyncHandler(async (req, res) => {
 module.exports = {
   authUser,
   registerUser,
+  googleAuth, // 👈 Don't forget to export it!
   getUserProfile,
 };

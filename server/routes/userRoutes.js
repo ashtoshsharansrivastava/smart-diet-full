@@ -5,7 +5,8 @@ const router = express.Router();
 const { 
   authUser, 
   registerUser, 
-  getUserProfile 
+  getUserProfile,
+  googleAuth
 } = require('../controllers/userController');
 
 // Import the protection middleware
@@ -16,6 +17,7 @@ router.post('/', registerUser);
 
 // 2. Login Route (POST /api/users/login)
 router.post('/login', authUser);
+router.post('/google', googleAuth);
 
 // 3. Profile Route (GET /api/users/profile) - Protected
 router.get('/profile', protect, getUserProfile);
