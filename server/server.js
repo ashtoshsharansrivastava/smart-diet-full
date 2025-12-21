@@ -41,12 +41,12 @@ app.use(cors({
   origin: [
     "http://localhost:5173",                  // Localhost
     "https://smart-diet-full.vercel.app",     // Main Production Frontend
-    "https://smart-diet-full.onrender.com"    // 👈 ADDED: Backend URL (Self)
+    "https://smart-diet-full.onrender.com"    // 👈 ADDED: Backend URL (Self - fixes internal redirects)
   ],
   credentials: true
 }));
 
-// 👈 ADDED: Handle Preflight requests for all routes (Crucial for CORS)
+// 👈 ADDED: Handle Preflight requests for all routes (CRITICAL FOR CORS)
 app.options('*', cors()); 
 
 // --- API ROUTES ---
@@ -57,7 +57,7 @@ app.use('/api/dietitians', require('./routes/dietitians'));
 
 // Admin & User Routes
 app.use('/api/admin', adminRoutes);
-app.use('/api/users', userRoutes); // 👈 Cleaned up: Removed the duplicate line
+app.use('/api/users', userRoutes); // 👈 Cleaned up: Kept only this one (you had it twice)
 
 // Root Route (Helpful for checking if server is awake)
 app.get('/', (req, res) => {
