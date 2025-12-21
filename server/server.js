@@ -8,6 +8,7 @@ const path = require('path');
 
 const connectDB = require('./config/db');
 const adminRoutes = require('./routes/adminRoutes');
+const userROutes = require('./routes/userRoutes');
 
 // 1. Connect to Database
 connectDB();
@@ -52,6 +53,7 @@ app.use('/api/recipes', require('./routes/recipes'));
 app.use('/api/dietitians', require('./routes/dietitians'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/admin', adminRoutes);
+app.use('/api/users', userRoutes);
 
 // ------------------
 
