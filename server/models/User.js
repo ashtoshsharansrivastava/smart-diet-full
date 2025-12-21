@@ -5,6 +5,7 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   avatar: { type: String }, // 👈 Added this field
+  googleId: { type: String },
   
   // Physical Profile
   age: { type: Number },
@@ -18,7 +19,17 @@ const userSchema = new mongoose.Schema({
   dietType: { type: String, default: 'veg' },
   allergies: [{ type: String }],
   
+  createdAt: { type: Date, default: Date.now },
+
+  // 👇 NEW FIELDS
+  role: { 
+    type: String, 
+    enum: ['user', 'dietitian', 'admin'], 
+    default: 'user' 
+  },
+  isVerified: { type: Boolean, default: false }, // For dietitians
   createdAt: { type: Date, default: Date.now }
+
 });
 
 module.exports = mongoose.model('User', userSchema);

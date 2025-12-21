@@ -38,8 +38,7 @@ const Navbar = () => {
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-8">
             <Link to="/" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">Home</Link>
-            <Link to="/features" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">Features</Link>
-            <Link to="/pricing" className="text-sm font-bold text-slate-400 hover:text-white transition-colors flex items-center gap-1 group">
+            <Link to="/dietitians" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">Find Expert</Link> <Link to="/pricing" className="text-sm font-bold text-slate-400 hover:text-white transition-colors flex items-center gap-1 group">
               Pricing <span className="bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[9px] px-1.5 py-0.5 rounded-full group-hover:bg-amber-500/20 transition-colors">PRO</span>
             </Link>
             

@@ -33,6 +33,7 @@ app.use(
 app.use(compression()); 
 app.use(express.json());
 
+
 // 3. CORS Configuration
 app.use(cors({
   origin: [
@@ -46,6 +47,11 @@ app.use(cors({
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/diet-plans', require('./routes/dietPlans'));
 app.use('/api/recipes', require('./routes/recipes'));
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/diet-plans', require('./routes/dietPlans'));
+app.use('/api/recipes', require('./routes/recipes'));
+app.use('/api/dietitians', require('./routes/dietitians'));
+app.use('/api/users', require('./routes/users'));
 // ------------------
 
 const PORT = process.env.PORT || 5000;

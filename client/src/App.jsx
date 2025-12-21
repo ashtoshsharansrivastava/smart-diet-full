@@ -18,7 +18,9 @@ import ShoppingList from './pages/ShoppingList';
 import Dashboard from './pages/Dashboard';
 import Signup from './pages/SignUp';
 import DietPlan from './pages/DietPlan';
-
+import Dietitians from './pages/Dietitians';
+import DietitianDetails from './pages/DietitianDetails';
+import BecomeDietitian from './pages/BecomeDIetitian';
 function App() {
   return (
     <AuthProvider> {/* 👈 Wrap everything in AuthProvider first */}
@@ -36,6 +38,9 @@ function App() {
             <Route path="/features" element={<Features />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/diet-plan" element={<DietPlan />} />
+            <Route path="/dietitians" element={<Dietitians />} />
+            <Route path="/dietitian/:id" element={<DietitianDetails />} />
+            <Route path="/dietitians/join" element={<BecomeDietitian />} />
 
             {/* Protected Routes (Only for logged in users) */}
             <Route 
