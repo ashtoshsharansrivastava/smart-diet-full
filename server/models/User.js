@@ -21,15 +21,19 @@ const userSchema = new mongoose.Schema({
   
   createdAt: { type: Date, default: Date.now },
 
-  // 👇 NEW FIELDS
-  role: { 
+ role: { 
     type: String, 
     enum: ['user', 'dietitian', 'admin'], 
-    default: 'user' 
+    default: 'user' // Everyone starts as a user
   },
-  isVerified: { type: Boolean, default: false }, // For dietitians
-  createdAt: { type: Date, default: Date.now }
+  dietitianStatus: {
+    type: String,
+    enum: ['na', 'pending', 'approved', 'rejected'],
+    default: 'na' // 'na' means Not Applicable (they haven't applied)
+  },
+  specialization: { type: String, default: '' }, // For dietitian applicants
+  // --- NEW FIELDS END ---
 
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

@@ -7,6 +7,7 @@ const compression = require('compression');
 const path = require('path');
 
 const connectDB = require('./config/db');
+const adminRoutes = require('./routes/adminRoutes');
 
 // 1. Connect to Database
 connectDB();
@@ -49,6 +50,8 @@ app.use('/api/diet-plans', require('./routes/dietPlans'));
 app.use('/api/recipes', require('./routes/recipes'));
 
 app.use('/api/dietitians', require('./routes/dietitians'));
+app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/admin', adminRoutes);
 
 // ------------------
 
