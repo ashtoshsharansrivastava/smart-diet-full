@@ -36,24 +36,33 @@ app.use(compression());
 app.use(express.json());
 
 
-// 3. CORS Configuration
+// 3. CORS Configuration (UPDATED)
 app.use(cors({
   origin: [
     "http://localhost:5173",                  // Localhost
-    "https://smart-diet-full.vercel.app"      // 👈 Removed the trailing slash '/'
+    "https://smart-diet-full.vercel.app",     // Main Production Frontend
+    "https://smart-diet-full.onrender.com"    // 👈 ADDED: Backend URL (Self)
   ],
   credentials: true
 }));
+
+// 👈 ADDED: Handle Preflight requests for all routes (Crucial for CORS)
+app.options('*', cors()); 
 
 // --- API ROUTES ---
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/diet-plans', require('./routes/dietPlans'));
 app.use('/api/recipes', require('./routes/recipes'));
-
 app.use('/api/dietitians', require('./routes/dietitians'));
-app.use('/api/users', require('./routes/userRoutes'));
+
+// Admin & User Routes
 app.use('/api/admin', adminRoutes);
-app.use('/api/users', userRoutes);
+app.use('/api/users', userRoutes); // 👈 Cleaned up: Removed the duplicate line
+
+// Root Route (Helpful for checking if server is awake)
+app.get('/', (req, res) => {
+  res.send('API is running...');
+});
 
 // ------------------
 
