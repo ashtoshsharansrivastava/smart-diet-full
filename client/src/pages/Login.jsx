@@ -3,17 +3,15 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Layout from '../components/layout/Layout';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
-import axios from 'axios'; // ✅ IMPORT ADDED
-import { signInWithPopup } from 'firebase/auth'; // ✅ IMPORT ADDED
-import { auth, googleProvider } from '../config/firebase'; // ✅ ENSURE PATH IS CORRECT
+import axios from 'axios'; 
+import { signInWithPopup } from 'firebase/auth'; 
+import { auth, googleProvider } from '../config/firebase'; 
 
-// ❌ Removed 'async' (React components must be synchronous)
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   
-  // We only use the standard login from context
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -27,19 +25,17 @@ const Login = () => {
     setLoading(false);
   };
 
-  // 🔵 GOOGLE LOGIN HANDLER (Logic moved INSIDE here)
+  // 🔵 GOOGLE LOGIN HANDLER
   const handleGoogleLogin = async () => {
-    console.log("🔵 Google Login Triggered - Target:", "https://smart-diet-full.onrender.com"); // Add this line
+    console.log("🔵 Google Login Triggered - Target:", "https://smart-diet-full.onrender.com");
     try {
       setLoading(true);
 
       // 1. Trigger the Popup
-      // ✅ Fixed Typo: signInWithPopup (was signIntWithPopup)
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
 
       // 2. Define your Backend URL
-      // ⚠️ IMPORTANT: Verify this URL is your actual active Render backend
       const BACKEND_URL = "https://smart-diet-full.onrender.com"; 
 
       // 3. Send data to Backend
@@ -50,15 +46,15 @@ const Login = () => {
         googleId: user.uid
       });
 
-      // 4. Save response (which includes the 'role') to LocalStorage
+      // 4. Save response to LocalStorage
       localStorage.setItem('userInfo', JSON.stringify(data));
 
-      // 5. Redirect
-      navigate('/dashboard');
+      // 5. FORCE HARD REDIRECT (Fixes the state issue)
+      // We use window.location to force the app to reload and grab the new token
+      window.location.href = '/dashboard'; 
 
     } catch (err) {
       console.error("Google Login Error:", err);
-      // Detailed error alert for debugging
       alert(`Login Failed: ${err.message}`);
     } finally {
       setLoading(false);
