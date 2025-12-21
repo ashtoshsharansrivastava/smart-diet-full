@@ -1,7 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const { protect, admin } = require('../middleware/authMiddleware');
+// 1. Import the new functions from userController
+const { getUsers, deleteUser } = require('../controllers/userController');
 const User = require('../models/User');
+
+// --- NEW ROUTES FOR ADMIN DASHBOARD ---
+
+// @desc    Get all users
+// @route   GET /api/admin/users
+router.get('/users', protect, admin, getUsers);
+
+// @desc    Delete a user
+// @route   DELETE /api/admin/users/:id
+router.delete('/users/:id', protect, admin, deleteUser);
+
+// --------------------------------------
 
 // @desc    Get all users who have applied to be dietitians
 // @route   GET /api/admin/applicants
@@ -17,7 +31,7 @@ router.get('/applicants', protect, admin, async (req, res) => {
 // @desc    Approve or Reject a dietitian
 // @route   PUT /api/admin/update-status/:id
 router.put('/update-status/:id', protect, admin, async (req, res) => {
-  const { status } = req.body; // Expecting 'approved' or 'rejected'
+  const { status } = req.body; 
   
   try {
     const user = await User.findById(req.params.id);
@@ -26,9 +40,8 @@ router.put('/update-status/:id', protect, admin, async (req, res) => {
       user.dietitianStatus = status;
       
       if (status === 'approved') {
-        user.role = 'dietitian'; // Promote user
+        user.role = 'dietitian'; 
       } else {
-        // If rejected, keep role as 'user' but set status to rejected
         user.role = 'user'; 
       }
 
