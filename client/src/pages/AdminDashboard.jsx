@@ -1,62 +1,70 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Layout from '../components/layout/Layout';
-import { Users, ShieldCheck, Trash2, AlertTriangle } from 'lucide-react';
+import { Users, ShieldCheck, Trash2, Crown, CheckCircle, XCircle } from 'lucide-react';
 
 const AdminDashboard = () => {
-  // 1. Initialize as empty array [] to prevent "map is not a function" crash
-  const [users, setUsers] = useState([]); 
+  const [users, setUsers] = useState([]);
+  const [applicants, setApplicants] = useState([]); // Stores pending dietitians
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Helper to get token config
+  const getConfig = () => {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+    return { headers: { Authorization: `Bearer ${userInfo?.token}` } };
+  };
+
+  const fetchData = async () => {
+    try {
+      const config = getConfig();
+      const BACKEND_URL = "https://smart-diet-full.onrender.com";
+
+      // 1. Fetch All Users
+      const usersRes = await axios.get(`${BACKEND_URL}/api/admin/users`, config);
+      setUsers(Array.isArray(usersRes.data) ? usersRes.data : []);
+
+      // 2. Fetch Pending Applicants
+      const applicantsRes = await axios.get(`${BACKEND_URL}/api/admin/applicants`, config);
+      setApplicants(Array.isArray(applicantsRes.data) ? applicantsRes.data : []);
+
+      setLoading(false);
+    } catch (err) {
+      console.error("Admin Fetch Error:", err);
+      setError("Failed to load admin data.");
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-        
-        // Safety check: ensure token exists
-        if (!userInfo || !userInfo.token) {
-          throw new Error("No authentication token found.");
-        }
-
-        const config = {
-          headers: {
-            Authorization: `Bearer ${userInfo.token}`,
-          },
-        };
-
-        const BACKEND_URL = "https://smart-diet-full.onrender.com";
-        const { data } = await axios.get(`${BACKEND_URL}/api/admin/users`, config);
-
-        // 2. Ensure we actually got an array before setting state
-        if (Array.isArray(data)) {
-          setUsers(data);
-        } else {
-          // If backend returns { message: "..." } instead of array
-          setUsers([]);
-        }
-        setLoading(false);
-
-      } catch (err) {
-        console.error("Admin Fetch Error:", err);
-        // 3. Set error message instead of crashing
-        setError(err.response?.data?.message || err.message || "Failed to load users");
-        setLoading(false);
-      }
-    };
-
-    fetchUsers();
+    fetchData();
   }, []);
+
+  // Handle Approve/Reject Logic
+  const handleReview = async (id, status) => {
+    if (!window.confirm(`Are you sure you want to ${status} this applicant?`)) return;
+
+    try {
+      const config = getConfig();
+      const BACKEND_URL = "https://smart-diet-full.onrender.com";
+      
+      // Send PUT request to /api/admin/applicants/:id
+      await axios.put(`${BACKEND_URL}/api/admin/applicants/${id}`, { status }, config);
+      
+      alert(`User ${status} successfully!`);
+      fetchData(); // Refresh lists
+
+    } catch (err) {
+      alert("Action failed: " + (err.response?.data?.message || err.message));
+    }
+  };
 
   const deleteUser = async (id) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-        const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+        const config = getConfig();
         const BACKEND_URL = "https://smart-diet-full.onrender.com";
-        
         await axios.delete(`${BACKEND_URL}/api/admin/users/${id}`, config);
-        // Update UI locally
         setUsers(users.filter((user) => user._id !== id));
       } catch (err) {
         alert("Failed to delete user");
@@ -75,95 +83,102 @@ const AdminDashboard = () => {
                 <ShieldCheck className="text-red-500" size={32} /> 
                 Admin Command Center
               </h1>
-              <p className="text-slate-400 mt-2">System Overview & User Management</p>
-            </div>
-            <div className="bg-slate-900 px-4 py-2 rounded-lg border border-slate-800">
-              <span className="text-sm text-slate-500">Total Users</span>
-              <p className="text-2xl font-bold text-white">{users.length}</p>
+              <p className="text-slate-400 mt-2">Manage Users & Dietitian Approvals</p>
             </div>
           </div>
 
-          {/* 4. Display Error Safely instead of White Page */}
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/50 text-red-400 p-6 rounded-xl mb-6 flex items-center gap-4">
-              <AlertTriangle size={24} />
-              <div>
-                <h3 className="font-bold">Access Denied or Server Error</h3>
-                <p className="text-sm opacity-80">{error}</p>
+          {error && <div className="text-red-400 mb-4 bg-red-500/10 p-4 rounded border border-red-500/20">{error}</div>}
+
+          {/* 🚀 SECTION 1: PENDING APPLICATIONS (Only show if there are applicants) */}
+          {applicants.length > 0 && (
+            <div className="mb-10 animate-fade-in-up">
+              <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <Crown className="text-amber-400" /> Pending Expert Applications
+              </h3>
+              
+              <div className="grid gap-4">
+                {applicants.map(app => (
+                  <div key={app._id} className="bg-slate-900/80 border border-amber-500/30 p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_0_20px_rgba(245,158,11,0.1)]">
+                    
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-full border-2 border-amber-500 overflow-hidden bg-slate-800 flex items-center justify-center text-amber-500 font-bold text-xl">
+                         {app.avatar ? <img src={app.avatar} alt="User" className="w-full h-full object-cover" /> : app.name.charAt(0)}
+                      </div>
+                      <div>
+                        <h4 className="text-lg font-bold text-white">{app.name}</h4>
+                        <p className="text-slate-400 text-sm">{app.email}</p>
+                        <div className="flex gap-2 mt-2">
+                            <span className="text-xs bg-slate-800 px-2 py-1 rounded text-slate-300">Exp: {app.experience} Years</span>
+                            <span className="text-xs bg-slate-800 px-2 py-1 rounded text-slate-300">Rate: ₹{app.hourlyRate}/hr</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <button 
+                        onClick={() => handleReview(app._id, 'approved')}
+                        className="flex items-center gap-2 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 px-4 py-2 rounded-xl font-bold transition-all border border-emerald-500/50"
+                      >
+                        <CheckCircle size={18} /> Approve
+                      </button>
+                      <button 
+                        onClick={() => handleReview(app._id, 'rejected')}
+                        className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white px-4 py-2 rounded-xl font-bold transition-all border border-red-500/50"
+                      >
+                        <XCircle size={18} /> Reject
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
 
-          {/* Loading State */}
-          {loading ? (
-            <div className="text-center py-20 animate-pulse text-slate-500">
-              Loading System Data...
-            </div>
-          ) : (
-            /* Data Table */
-            <div className="bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
-              <div className="p-6 border-b border-slate-800 flex justify-between items-center">
+          {/* SECTION 2: ALL USERS LIST */}
+          <div className="bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+             <div className="p-6 border-b border-slate-800">
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Users size={18} className="text-emerald-400" /> User Database
+                  <Users size={18} className="text-emerald-400" /> System Users
                 </h3>
-              </div>
-              
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-slate-950/50 text-slate-400 text-xs uppercase tracking-wider">
-                      <th className="p-4 font-bold">User Identity</th>
-                      <th className="p-4 font-bold">Email</th>
-                      <th className="p-4 font-bold">Role</th>
-                      <th className="p-4 font-bold">Joined</th>
-                      <th className="p-4 font-bold text-right">Actions</th>
+             </div>
+             
+             {loading ? (
+               <div className="p-10 text-center text-slate-500 animate-pulse">Loading Database...</div>
+             ) : (
+               <table className="w-full text-left">
+                  <thead className="bg-slate-950/50 text-slate-400 text-xs uppercase">
+                    <tr>
+                      <th className="p-4">User</th>
+                      <th className="p-4">Role</th>
+                      <th className="p-4 text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800">
-                    {/* 5. Safe Map: Only runs if users is an array */}
-                    {users.map((user) => (
-                      <tr key={user._id} className="hover:bg-slate-800/50 transition-colors">
+                    {users.map(user => (
+                      <tr key={user._id} className="hover:bg-slate-800/50">
                         <td className="p-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden">
-                              {user.avatar ? (
-                                <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                              ) : (
-                                <span className="font-bold text-emerald-500">{user.name?.charAt(0)}</span>
-                              )}
-                            </div>
-                            <span className="font-bold text-white">{user.name}</span>
-                          </div>
+                          <div className="font-bold text-white">{user.name}</div>
+                          <div className="text-xs text-slate-500">{user.email}</div>
                         </td>
-                        <td className="p-4 text-slate-400 text-sm">{user.email}</td>
                         <td className="p-4">
-                          <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
-                            user.role === 'admin' 
-                              ? 'bg-red-500/10 text-red-400 border-red-500/20' 
-                              : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                          <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${
+                            user.role === 'admin' ? 'text-red-400 bg-red-500/10' :
+                            user.role === 'dietitian' ? 'text-amber-400 bg-amber-500/10' :
+                            'text-emerald-400 bg-emerald-500/10'
                           }`}>
                             {user.role}
                           </span>
                         </td>
-                        <td className="p-4 text-slate-500 text-xs font-mono">
-                          {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
-                        </td>
                         <td className="p-4 text-right">
-                          <button 
-                            onClick={() => deleteUser(user._id)}
-                            className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                            title="Delete User"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                          <button onClick={() => deleteUser(user._id)} className="text-slate-500 hover:text-red-400"><Trash2 size={18}/></button>
                         </td>
                       </tr>
                     ))}
                   </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+               </table>
+             )}
+          </div>
+
         </div>
       </div>
     </Layout>
