@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import axios from 'axios'; // 👈 We use axios directly to avoid the 'api' error
 import { Link } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
-import { Search, Star, ShieldCheck, Clock, ArrowRight, DollarSign, User } from 'lucide-react';
+import { Search, Star, ShieldCheck, Clock, ArrowRight, DollarSign, User, Filter } from 'lucide-react';
 
 const FindDietitians = () => {
   const [dietitians, setDietitians] = useState([]);
@@ -13,6 +13,7 @@ const FindDietitians = () => {
     const fetchDietitians = async () => {
       try {
         const BACKEND_URL = "https://smart-diet-full.onrender.com";
+        // ✅ Using axios directly fixes 'api is not defined'
         const { data } = await axios.get(`${BACKEND_URL}/api/dietitians`);
         setDietitians(data);
       } catch (err) {
@@ -25,7 +26,7 @@ const FindDietitians = () => {
     fetchDietitians();
   }, []);
 
-  // Filter logic for search bar
+  // Filter logic: Search by Name OR Specialization
   const filteredDietitians = dietitians.filter((d) => 
     d.user?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     d.specialization.toLowerCase().includes(searchTerm.toLowerCase())
@@ -39,28 +40,31 @@ const FindDietitians = () => {
           {/* Header Section */}
           <div className="text-center mb-16 space-y-4">
             <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight">
-              Connect with Top <span className="text-emerald-400">Bio-Hackers</span>
+              Consult Top <span className="text-emerald-400">Bio-Experts</span>
             </h1>
             <p className="text-slate-400 max-w-2xl mx-auto text-lg">
-              Verified nutrition experts ready to build your personalized protocol.
+              Connect with verified clinical nutritionists to fine-tune your metabolic protocol.
             </p>
 
             {/* Search Bar */}
-            <div className="max-w-md mx-auto relative mt-8">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <div className="max-w-xl mx-auto relative mt-8">
+              <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
                 <Search className="h-5 w-5 text-slate-500" />
               </div>
               <input
                 type="text"
-                className="block w-full pl-11 pr-4 py-4 bg-slate-900/50 border border-slate-800 rounded-2xl text-white placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all shadow-xl backdrop-blur-sm"
-                placeholder="Search by name or specialization (e.g., Keto, Vegan)..."
+                className="block w-full pl-12 pr-12 py-4 bg-slate-900/50 border border-slate-800 rounded-2xl text-white placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all shadow-xl backdrop-blur-sm"
+                placeholder="Search by specialty (e.g., Diabetes, PCOS)..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
+              <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                 <Filter className="h-5 w-5 text-slate-600" />
+              </div>
             </div>
           </div>
 
-          {/* Loading State */}
+          {/* Content Grid */}
           {loading ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                {[1,2,3].map(i => (
@@ -68,13 +72,12 @@ const FindDietitians = () => {
                ))}
             </div>
           ) : filteredDietitians.length === 0 ? (
-            <div className="text-center py-20 bg-slate-900/30 rounded-3xl border border-slate-800 border-dashed">
+            <div className="text-center py-20 bg-slate-900/30 rounded-3xl border border-slate-800 border-dashed max-w-2xl mx-auto">
               <User size={48} className="mx-auto text-slate-600 mb-4" />
               <h3 className="text-xl font-bold text-white">No Experts Found</h3>
-              <p className="text-slate-500">Try adjusting your search or check back later.</p>
+              <p className="text-slate-500 mt-2">Try adjusting your search terms.</p>
             </div>
           ) : (
-            /* Dietitian Grid */
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredDietitians.map((profile) => (
                 <div key={profile._id} className="group bg-slate-900/40 backdrop-blur-md border border-slate-800 hover:border-emerald-500/50 rounded-3xl overflow-hidden transition-all duration-300 hover:shadow-[0_0_30px_rgba(16,185,129,0.1)] flex flex-col">
