@@ -3,19 +3,37 @@ const router = express.Router();
 const User = require('../models/User');
 const DietitianProfile = require('../models/DietitianProfile');
 const Review = require('../models/Review');
-const auth = require('../middleware/auth'); // Your existing auth middleware
+
+// ✅ CRITICAL FIX: Use the new 'protect' middleware
+const { protect } = require('../middleware/authMiddleware');
+
+// ✅ IMPORT CONTROLLERS (For the new features)
+const { 
+  onboardDietitian,
+  getMyClients 
+} = require('../controllers/dietitianController');
+
+
+// --- 1. NEW FEATURES (Using Controllers) ---
+
+// @route   POST /api/dietitians/onboard
+// @desc    Apply to be a Dietitian (Correctly sets status to 'pending')
+router.post('/onboard', protect, onboardDietitian); 
+
+// @route   GET /api/dietitians/clients
+// @desc    Get my clients (For the Dashboard)
+router.get('/clients', protect, getMyClients);
+
+
+// --- 2. EXISTING FEATURES (Kept Inline) ---
 
 // @route   GET /api/dietitians
 // @desc    Get all verified dietitians
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    // 1. Find all profiles
     const profiles = await DietitianProfile.find().populate('user', 'name avatar isVerified');
-    
-    // 2. Filter out anyone whose User account isn't verified (Optional)
     const verifiedProfiles = profiles.filter(p => p.user && p.user.isVerified);
-    
     res.json(verifiedProfiles);
   } catch (err) {
     console.error(err.message);
@@ -31,9 +49,7 @@ router.get('/:id', async (req, res) => {
     const profile = await DietitianProfile.findById(req.params.id).populate('user', 'name avatar');
     if (!profile) return res.status(404).json({ msg: 'Dietitian not found' });
     
-    // Get reviews too
     const reviews = await Review.find({ dietitian: req.params.id }).sort({ createdAt: -1 });
-    
     res.json({ profile, reviews });
   } catch (err) {
     res.status(500).send('Server Error');
@@ -43,16 +59,16 @@ router.get('/:id', async (req, res) => {
 // @route   POST /api/dietitians/:id/review
 // @desc    Add a review
 // @access  Private
-router.post('/:id/review', auth, async (req, res) => {
+router.post('/:id/review', protect, async (req, res) => { // ✅ Updated to use 'protect'
   try {
     const { rating, comment } = req.body;
     const profile = await DietitianProfile.findById(req.params.id);
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user._id); // ✅ protect uses _id
 
     // Create Review
     const newReview = new Review({
       dietitian: req.params.id,
-      user: req.user.id,
+      user: req.user._id,
       userName: user.name,
       rating,
       comment
@@ -67,37 +83,9 @@ router.post('/:id/review', auth, async (req, res) => {
 
     res.json(newReview);
   } catch (err) {
+    console.error(err);
     res.status(500).send('Server Error');
   }
-});
-
-// @route   POST /api/dietitians/onboard
-// @desc    Turn a normal user into a Dietitian (For testing)
-// @access  Private
-router.post('/onboard', auth, async (req, res) => {
-    try {
-        const { specialization, experience, bio, hourlyRate } = req.body;
-        
-        // Update User Role
-        await User.findByIdAndUpdate(req.user.id, { role: 'dietitian', isVerified: true });
-
-        // Create Profile
-        let profile = await DietitianProfile.findOne({ user: req.user.id });
-        if(!profile) {
-            profile = new DietitianProfile({
-                user: req.user.id,
-                specialization,
-                experience,
-                bio,
-                hourlyRate
-            });
-            await profile.save();
-        }
-        res.json(profile);
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Server Error');
-    }
 });
 
 module.exports = router;
