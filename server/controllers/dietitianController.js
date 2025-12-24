@@ -3,25 +3,53 @@ const User = require('../models/User');
 const DietitianProfile = require('../models/DietitianProfile');
 const Review = require('../models/Review');
 
-// @desc    Get all verified dietitians (Public)
-// @route   GET /api/dietitians
-// @access  Public
-// @desc    Get all verified dietitians
+// @desc    Get all verified dietitians (DEBUG MODE)
 // @route   GET /api/dietitians
 // @access  Public
 const getAllDietitians = asyncHandler(async (req, res) => {
+  console.log("-----------------------------------------");
+  console.log("🔍 API CALL: Fetching Dietitians...");
+
   // 1. Get all profiles and populate user info
-  // We explicitly fetch 'role', 'dietitianStatus', and 'isVerified'
   const profiles = await DietitianProfile.find()
     .populate('user', 'name avatar role dietitianStatus isVerified email');
 
-  // 2. Filter: Show anyone who is explicitly a 'dietitian' OR has 'approved' status
+  console.log(`📊 Found ${profiles.length} total profiles in DB.`);
+
+  // 2. Filter and LOG why we accept/reject each one
   const activeDietitians = profiles.filter(p => {
-    return p.user && (p.user.role === 'dietitian' || p.user.dietitianStatus === 'approved');
+    // Check 1: Does the profile have a user linked?
+    if (!p.user) {
+      console.log(`❌ Rejecting Profile ${p._id}: No User linked (Orphan)`);
+      return false;
+    }
+
+    // Check 2: Check status
+    const isDietitian = p.user.role === 'dietitian';
+    const isApproved = p.user.dietitianStatus === 'approved';
+    const isVerified = p.user.isVerified;
+
+    console.log(`🔎 Checking: ${p.user.name}`);
+    console.log(`   - Role: ${p.user.role} (${isDietitian ? 'OK' : 'Not Dietitian'})`);
+    console.log(`   - Status: ${p.user.dietitianStatus} (${isApproved ? 'OK' : 'Not Approved'})`);
+    console.log(`   - Verified: ${isVerified}`);
+
+    // RELAXED FILTER: Accept if Role is Dietitian OR Status is Approved
+    if (isDietitian || isApproved) {
+      console.log("✅ ACCEPTED");
+      return true;
+    } else {
+      console.log("❌ REJECTED: Not a dietitian role and not approved.");
+      return false;
+    }
   });
+
+  console.log(`📤 Sending ${activeDietitians.length} profiles to frontend.`);
+  console.log("-----------------------------------------");
 
   res.json(activeDietitians);
 });
+
 // @desc    Get dietitian profile by ID
 // @route   GET /api/dietitians/:id
 // @access  Public
@@ -45,7 +73,6 @@ const getDietitianById = asyncHandler(async (req, res) => {
 const registerDietitian = asyncHandler(async (req, res) => {
   const { specialization, experience, bio, hourlyRate } = req.body;
   
-  // Check if profile exists
   let profile = await DietitianProfile.findOne({ user: req.user._id });
   
   if (profile) {
@@ -78,8 +105,7 @@ const onboardDietitian = asyncHandler(async (req, res) => {
         throw new Error('User not found');
     }
 
-    // 2. ✅ CRITICAL FIX: Set status to 'pending' but KEEP role as 'user'
-    // They only become a 'dietitian' when the Admin approves them.
+    // 2. Set status to 'pending'
     user.dietitianStatus = 'pending';
     await user.save();
 
@@ -98,7 +124,6 @@ const onboardDietitian = asyncHandler(async (req, res) => {
         });
         await profile.save();
     } else {
-        // If profile exists (re-applying), update it
         profile.specialization = specialization;
         profile.experience = experience;
         profile.bio = bio;
@@ -108,18 +133,13 @@ const onboardDietitian = asyncHandler(async (req, res) => {
         await profile.save();
     }
 
-    res.json({ 
-      message: "Application submitted successfully. Waiting for Admin approval.", 
-      profile 
-    });
+    res.json({ message: "Application submitted", profile });
 });
 
 // @desc    Get all clients for the dietitian
 // @route   GET /api/dietitians/clients
 // @access  Private (Dietitian Only)
 const getMyClients = asyncHandler(async (req, res) => {
-  // Currently fetching all standard users.
-  // In a future update, you can filter by `dietitianId: req.user._id`
   const clients = await User.find({ role: 'user' }).select('-password');
   
   if (clients) {
