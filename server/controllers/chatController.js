@@ -1,6 +1,6 @@
 const asyncHandler = require("express-async-handler");
 
-// @desc    Process chat message (Bulletproof Version)
+// @desc    Process chat message (Stable Version)
 // @route   POST /api/chat
 // @access  Public
 const chatWithAI = asyncHandler(async (req, res) => {
@@ -11,14 +11,18 @@ const chatWithAI = asyncHandler(async (req, res) => {
     throw new Error("Message is required");
   }
 
+  // 1. Get API Key
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ reply: "Server Error: API Key missing." });
+    console.error("❌ API Key Missing");
+    return res.status(500).json({ reply: "Server Config Error: API Key Missing" });
   }
 
   try {
-    // 👇 CHANGED: We use the standard 'gemini-pro' which works for everyone
-    const model = "gemini-pro"; 
+    // 👇 FORCE STANDARD MODEL (No "Flash", No "1.5")
+    const model = "gemini-pro";
+    
+    // Direct URL to Google API
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
     const payload = {
@@ -26,15 +30,15 @@ const chatWithAI = asyncHandler(async (req, res) => {
         role: "user",
         parts: [{ text: `
           You are the "SmartDiet AI Assistant". 
-          Help users with nutrition, diet planning, and using this website.
-          Keep answers short (under 50 words) and helpful.
+          Help users with nutrition and diet planning.
+          Keep answers short (under 50 words).
           
           User Message: ${message}
         `}]
       }]
     };
 
-    // Send Request
+    // 2. Send Request
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -43,21 +47,21 @@ const chatWithAI = asyncHandler(async (req, res) => {
 
     const data = await response.json();
 
-    // Error Handling
+    // 3. Handle Errors
     if (!response.ok) {
       console.error("🔥 Google API Error:", JSON.stringify(data, null, 2));
       return res.status(500).json({ 
-        reply: "I am currently overloaded. Please try again in a moment." 
+        reply: "I am having trouble connecting to the AI. Please try again." 
       });
     }
 
-    // Success
+    // 4. Send Success Response
     const botReply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated.";
     res.json({ reply: botReply });
 
   } catch (error) {
-    console.error("❌ Controller Error:", error.message);
-    res.status(500).json({ reply: "Connection error. Please try again." });
+    console.error("❌ Controller Crash:", error.message);
+    res.status(500).json({ reply: "Internal Server Error." });
   }
 });
 
