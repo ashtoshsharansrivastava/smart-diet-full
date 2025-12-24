@@ -17,7 +17,8 @@ const chatWithAI = asyncHandler(async (req, res) => {
 
   try {
     // 1. Configure the Model
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+  // 👇 UPDATED MODEL NAME
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     // 2. Define the "Persona" (System Instruction)
     // This tells the AI how to behave.
