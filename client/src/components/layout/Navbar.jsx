@@ -101,7 +101,10 @@ const Navbar = () => {
     Dietitian Workspace
   </Link>
 )}
-
+<Link to="/find-expert" className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-300 hover:bg-slate-800 hover:text-emerald-400 transition-colors border-b border-slate-800">
+  <Search size={16} className="text-emerald-400" />
+  Find Expert
+</Link>
                     <button 
                       onClick={handleLogout}
                       className="flex items-center w-full gap-3 px-4 py-3 text-sm font-bold text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"

@@ -19,6 +19,7 @@ import DietitianDetails from './pages/DietitianDetails';
 import BecomeDietitian from './pages/BecomeDietitian'; 
 import AdminDashboard from './pages/AdminDashboard'; // Ensure this file exists in this folder
 import DietitianDashboard from './pages/DietitianDashboard';
+import FindDietitians from './pages/FIndDietitians';  
 
 // Security
 import ProtectedRoute from './components/auth/ProtectedRoute'; 
@@ -125,6 +126,12 @@ const App = () => {
               <AdminRoute>
                 <AdminDashboard />
               </AdminRoute>
+            } 
+          />
+          <Route 
+            path="/find-dietitians" 
+            element={
+              <FindDietitians />
             } 
           />
 
