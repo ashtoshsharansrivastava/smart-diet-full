@@ -32,7 +32,7 @@ const ChatBot = () => {
     try {
       // 👇 REAL API CALL
       // Use "http://localhost:5000" for local testing, or your Render URL for production
-      const BACKEND_URL = "http://localhost:5000"; 
+      const BACKEND_URL = "https://smart-diet-full.onrender.com"; 
       
       const { data } = await axios.post(`${BACKEND_URL}/api/chat`, {
         message: userMsg.text
