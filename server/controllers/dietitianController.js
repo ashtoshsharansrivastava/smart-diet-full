@@ -6,19 +6,22 @@ const Review = require('../models/Review');
 // @desc    Get all verified dietitians (Public)
 // @route   GET /api/dietitians
 // @access  Public
+// @desc    Get all verified dietitians
+// @route   GET /api/dietitians
+// @access  Public
 const getAllDietitians = asyncHandler(async (req, res) => {
   // 1. Get all profiles and populate user info
-  const profiles = await DietitianProfile.find().populate('user', 'name avatar isVerified email');
+  // We explicitly fetch 'role', 'dietitianStatus', and 'isVerified'
+  const profiles = await DietitianProfile.find()
+    .populate('user', 'name avatar role dietitianStatus isVerified email');
 
-  // 2. Filter: Must have a User associated AND User must be Verified
-  // This removes "Ghost" profiles (deleted users) and "Pending" applicants
+  // 2. Filter: Show anyone who is explicitly a 'dietitian' OR has 'approved' status
   const activeDietitians = profiles.filter(p => {
-    return p.user && p.user.isVerified === true;
+    return p.user && (p.user.role === 'dietitian' || p.user.dietitianStatus === 'approved');
   });
 
   res.json(activeDietitians);
 });
-
 // @desc    Get dietitian profile by ID
 // @route   GET /api/dietitians/:id
 // @access  Public
