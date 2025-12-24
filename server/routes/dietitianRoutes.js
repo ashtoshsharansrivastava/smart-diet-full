@@ -5,18 +5,27 @@ const {
   registerDietitian, 
   getAllDietitians, 
   getDietitianById,
-  onboardDietitian // Ensure this exists from previous step
+  onboardDietitian,
+  getMyClients // Ensure this exists from previous step
 } = require('../controllers/dietitianController');
 
 // 👇 Import the NEW controller
 const { getMyClients } = require('../controllers/dietitianController'); 
 
-// ... existing routes ...
-router.route('/').post(protect, registerDietitian).get(getAllDietitians);
-router.route('/onboard').post(protect, onboardDietitian);
-router.route('/:id').get(getDietitianById);
+router.route('/')
+  .get(getAllDietitians)
+  .post(protect, registerDietitian);
 
-// 👇 ADD THIS NEW ROUTE
+// Route 2: Apply to be a Dietitian (Protected)
+// This was likely causing your error if it used the wrong middleware
+router.route('/onboard')
+  .post(protect, onboardDietitian); 
+
+// Route 3: Get Dietitian's Clients (Protected)
 router.get('/clients', protect, getMyClients);
+
+// Route 4: Get Specific Dietitian (Public)
+router.route('/:id')
+  .get(getDietitianById);
 
 module.exports = router;
