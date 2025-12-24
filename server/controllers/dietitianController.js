@@ -3,13 +3,20 @@ const User = require('../models/User');
 const DietitianProfile = require('../models/DietitianProfile');
 const Review = require('../models/Review');
 
-// @desc    Get all verified dietitians
+// @desc    Get all verified dietitians (Public)
 // @route   GET /api/dietitians
 // @access  Public
 const getAllDietitians = asyncHandler(async (req, res) => {
-  const profiles = await DietitianProfile.find().populate('user', 'name avatar isVerified');
-  const verifiedProfiles = profiles.filter(p => p.user && p.user.isVerified);
-  res.json(verifiedProfiles);
+  // 1. Get all profiles and populate user info
+  const profiles = await DietitianProfile.find().populate('user', 'name avatar isVerified email');
+
+  // 2. Filter: Must have a User associated AND User must be Verified
+  // This removes "Ghost" profiles (deleted users) and "Pending" applicants
+  const activeDietitians = profiles.filter(p => {
+    return p.user && p.user.isVerified === true;
+  });
+
+  res.json(activeDietitians);
 });
 
 // @desc    Get dietitian profile by ID
@@ -23,7 +30,9 @@ const getDietitianById = asyncHandler(async (req, res) => {
     throw new Error('Dietitian not found');
   }
   
+  // Get reviews for this dietitian
   const reviews = await Review.find({ dietitian: req.params.id }).sort({ createdAt: -1 });
+  
   res.json({ profile, reviews });
 });
 
@@ -33,6 +42,7 @@ const getDietitianById = asyncHandler(async (req, res) => {
 const registerDietitian = asyncHandler(async (req, res) => {
   const { specialization, experience, bio, hourlyRate } = req.body;
   
+  // Check if profile exists
   let profile = await DietitianProfile.findOne({ user: req.user._id });
   
   if (profile) {
@@ -65,9 +75,9 @@ const onboardDietitian = asyncHandler(async (req, res) => {
         throw new Error('User not found');
     }
 
-    // 2. 👇 CRITICAL FIX: Set status to 'pending' and DO NOT promote role yet
+    // 2. ✅ CRITICAL FIX: Set status to 'pending' but KEEP role as 'user'
+    // They only become a 'dietitian' when the Admin approves them.
     user.dietitianStatus = 'pending';
-    // user.role remains 'user' until Admin approves!
     await user.save();
 
     // 3. Create or Update Dietitian Profile
@@ -85,6 +95,7 @@ const onboardDietitian = asyncHandler(async (req, res) => {
         });
         await profile.save();
     } else {
+        // If profile exists (re-applying), update it
         profile.specialization = specialization;
         profile.experience = experience;
         profile.bio = bio;
@@ -94,13 +105,18 @@ const onboardDietitian = asyncHandler(async (req, res) => {
         await profile.save();
     }
 
-    res.json({ message: "Application submitted", profile });
+    res.json({ 
+      message: "Application submitted successfully. Waiting for Admin approval.", 
+      profile 
+    });
 });
 
 // @desc    Get all clients for the dietitian
 // @route   GET /api/dietitians/clients
 // @access  Private (Dietitian Only)
 const getMyClients = asyncHandler(async (req, res) => {
+  // Currently fetching all standard users.
+  // In a future update, you can filter by `dietitianId: req.user._id`
   const clients = await User.find({ role: 'user' }).select('-password');
   
   if (clients) {
