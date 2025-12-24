@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Layout from '../components/layout/Layout';
-import { Users, ShieldCheck, Trash2, Crown, CheckCircle, XCircle } from 'lucide-react';
+import { Users, ShieldCheck, Trash2, Crown, CheckCircle, XCircle, Eye, X, DollarSign, Link as LinkIcon } from 'lucide-react';
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
-  const [applicants, setApplicants] = useState([]); // Stores pending dietitians
+  const [applicants, setApplicants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedApplicant, setSelectedApplicant] = useState(null); // 👈 Controls the Modal
 
   // Helper to get token config
   const getConfig = () => {
@@ -20,11 +21,11 @@ const AdminDashboard = () => {
       const config = getConfig();
       const BACKEND_URL = "https://smart-diet-full.onrender.com";
 
-      // 1. Fetch All Users
+      // Fetch Users
       const usersRes = await axios.get(`${BACKEND_URL}/api/admin/users`, config);
       setUsers(Array.isArray(usersRes.data) ? usersRes.data : []);
 
-      // 2. Fetch Pending Applicants
+      // Fetch Applicants
       const applicantsRes = await axios.get(`${BACKEND_URL}/api/admin/applicants`, config);
       setApplicants(Array.isArray(applicantsRes.data) ? applicantsRes.data : []);
 
@@ -40,7 +41,7 @@ const AdminDashboard = () => {
     fetchData();
   }, []);
 
-  // Handle Approve/Reject Logic
+  // Handle Approve/Reject
   const handleReview = async (id, status) => {
     if (!window.confirm(`Are you sure you want to ${status} this applicant?`)) return;
 
@@ -48,11 +49,11 @@ const AdminDashboard = () => {
       const config = getConfig();
       const BACKEND_URL = "https://smart-diet-full.onrender.com";
       
-      // Send PUT request to /api/admin/applicants/:id
       await axios.put(`${BACKEND_URL}/api/admin/applicants/${id}`, { status }, config);
       
       alert(`User ${status} successfully!`);
-      fetchData(); // Refresh lists
+      setSelectedApplicant(null); // Close modal
+      fetchData(); // Refresh list
 
     } catch (err) {
       alert("Action failed: " + (err.response?.data?.message || err.message));
@@ -74,7 +75,7 @@ const AdminDashboard = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-slate-950 py-10 px-4 font-display text-slate-200">
+      <div className="min-h-screen bg-slate-950 py-10 px-4 font-display text-slate-200 relative">
         <div className="max-w-7xl mx-auto">
           
           <div className="flex items-center justify-between mb-8">
@@ -89,11 +90,11 @@ const AdminDashboard = () => {
 
           {error && <div className="text-red-400 mb-4 bg-red-500/10 p-4 rounded border border-red-500/20">{error}</div>}
 
-          {/* 🚀 SECTION 1: PENDING APPLICATIONS (Only show if there are applicants) */}
+          {/* 🚀 SECTION 1: PENDING APPLICATIONS */}
           {applicants.length > 0 && (
             <div className="mb-10 animate-fade-in-up">
               <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <Crown className="text-amber-400" /> Pending Expert Applications
+                <Crown className="text-amber-400" /> Pending Approvals ({applicants.length})
               </h3>
               
               <div className="grid gap-4">
@@ -107,25 +108,34 @@ const AdminDashboard = () => {
                       <div>
                         <h4 className="text-lg font-bold text-white">{app.name}</h4>
                         <p className="text-slate-400 text-sm">{app.email}</p>
-                        <div className="flex gap-2 mt-2">
-                            <span className="text-xs bg-slate-800 px-2 py-1 rounded text-slate-300">Exp: {app.experience} Years</span>
-                            <span className="text-xs bg-slate-800 px-2 py-1 rounded text-slate-300">Rate: ₹{app.hourlyRate}/hr</span>
+                        <div className="mt-1 flex gap-2">
+                            <span className="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300 border border-slate-700">
+                                {app.profile?.specialization || "General"}
+                            </span>
                         </div>
                       </div>
                     </div>
 
                     <div className="flex gap-3">
+                      {/* VIEW FORM BUTTON */}
+                      <button 
+                        onClick={() => setSelectedApplicant(app)}
+                        className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-xl font-bold transition-all border border-slate-700 hover:border-slate-500"
+                      >
+                        <Eye size={18} /> View Form
+                      </button>
+
                       <button 
                         onClick={() => handleReview(app._id, 'approved')}
                         className="flex items-center gap-2 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 px-4 py-2 rounded-xl font-bold transition-all border border-emerald-500/50"
                       >
-                        <CheckCircle size={18} /> Approve
+                        <CheckCircle size={18} />
                       </button>
                       <button 
                         onClick={() => handleReview(app._id, 'rejected')}
                         className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white px-4 py-2 rounded-xl font-bold transition-all border border-red-500/50"
                       >
-                        <XCircle size={18} /> Reject
+                        <XCircle size={18} />
                       </button>
                     </div>
                   </div>
@@ -138,7 +148,7 @@ const AdminDashboard = () => {
           <div className="bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
              <div className="p-6 border-b border-slate-800">
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Users size={18} className="text-emerald-400" /> System Users
+                  <Users size={18} className="text-emerald-400" /> Database
                 </h3>
              </div>
              
@@ -180,6 +190,97 @@ const AdminDashboard = () => {
           </div>
 
         </div>
+
+        {/* 🌟 DETAIL MODAL (POPUP) 🌟 */}
+        {selectedApplicant && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
+                <div className="bg-slate-900 border border-slate-700 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-fade-in-up">
+                    
+                    {/* Modal Header */}
+                    <div className="bg-slate-950 p-6 flex justify-between items-start border-b border-slate-800">
+                        <div className="flex items-center gap-4">
+                             <div className="w-16 h-16 rounded-full border-2 border-emerald-500 overflow-hidden bg-slate-800">
+                                {selectedApplicant.avatar ? <img src={selectedApplicant.avatar} alt="User" className="w-full h-full object-cover" /> : null}
+                             </div>
+                             <div>
+                                 <h2 className="text-xl font-bold text-white">{selectedApplicant.name}</h2>
+                                 <p className="text-emerald-400 text-sm font-bold">Applicant Details</p>
+                             </div>
+                        </div>
+                        <button onClick={() => setSelectedApplicant(null)} className="p-2 bg-slate-800 rounded-full hover:bg-slate-700 text-slate-400"><X size={20}/></button>
+                    </div>
+
+                    {/* Modal Body */}
+                    <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800">
+                                <span className="text-xs text-slate-500 font-bold uppercase block mb-1">Specialization</span>
+                                <span className="text-white font-bold">{selectedApplicant.profile?.specialization || "N/A"}</span>
+                            </div>
+                            <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800">
+                                <span className="text-xs text-slate-500 font-bold uppercase block mb-1">Experience</span>
+                                <span className="text-white font-bold">{selectedApplicant.profile?.experience || "0"} Years</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <span className="text-xs text-slate-500 font-bold uppercase block mb-2">Applicant Bio</span>
+                            <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800 text-slate-300 text-sm leading-relaxed italic">
+                                "{selectedApplicant.profile?.bio || "No bio provided."}"
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col gap-3">
+                             <div className="flex items-center gap-2 text-sm text-slate-400 bg-slate-950/30 p-3 rounded-lg">
+                                <DollarSign size={16} className="text-emerald-500" />
+                                <span>Requested Rate: <strong className="text-white">₹{selectedApplicant.profile?.hourlyRate}/hr</strong></span>
+                             </div>
+                             <div className="flex items-center gap-2 text-sm text-slate-400 bg-slate-950/30 p-3 rounded-lg">
+                                <LinkIcon size={16} className="text-blue-500" />
+                                {selectedApplicant.profile?.meetingUrl ? (
+                                    <a href={selectedApplicant.profile.meetingUrl} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline truncate w-full">
+                                        {selectedApplicant.profile.meetingUrl}
+                                    </a>
+                                ) : <span className="text-slate-600">No meeting URL provided</span>}
+                             </div>
+                        </div>
+
+                        {/* Availability */}
+                        <div>
+                            <span className="text-xs text-slate-500 font-bold uppercase block mb-2">Available Days</span>
+                            <div className="flex flex-wrap gap-2">
+                                {selectedApplicant.profile?.availableDays?.length > 0 ? (
+                                    selectedApplicant.profile.availableDays.map(day => (
+                                        <span key={day} className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold rounded-full">
+                                            {day}
+                                        </span>
+                                    ))
+                                ) : <span className="text-slate-500 text-sm italic">No specific days listed</span>}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Modal Footer */}
+                    <div className="p-6 bg-slate-950 border-t border-slate-800 flex gap-4">
+                        <button 
+                            onClick={() => handleReview(selectedApplicant._id, 'approved')}
+                            className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 rounded-xl transition-all"
+                        >
+                            Approve
+                        </button>
+                        <button 
+                            onClick={() => handleReview(selectedApplicant._id, 'rejected')}
+                            className="flex-1 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white font-bold py-3 rounded-xl transition-all border border-red-500/30"
+                        >
+                            Reject
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        )}
+
       </div>
     </Layout>
   );

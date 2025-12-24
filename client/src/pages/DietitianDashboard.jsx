@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
 import { 
-  Users, Calendar, Activity, TrendingUp, 
+  Users, Calendar, Activity, 
   Search, MessageSquare, FileText, Plus 
 } from 'lucide-react';
 
@@ -11,24 +11,37 @@ const DietitianDashboard = () => {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ totalClients: 0, pendingPlans: 0, activePlans: 0 });
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // 1. Safety Check: Ensure User is logged in
         const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+        
+        if (!userInfo || !userInfo.token) {
+           console.error("No authentication token found.");
+           navigate('/login'); // Redirect to login if token is missing
+           return;
+        }
+
         const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
         const BACKEND_URL = "https://smart-diet-full.onrender.com"; // Your Render URL
 
-        // 1. Fetch Clients assigned to this Dietitian
+        // 2. Fetch Clients
         const { data } = await axios.get(`${BACKEND_URL}/api/dietitians/clients`, config);
-        setClients(data);
+        
+        // 3. Update State (Safety check: ensure data is array)
+        if (Array.isArray(data)) {
+            setClients(data);
 
-        // 2. Calculate Stats (Mock logic - you can make this real later)
-        setStats({
-          totalClients: data.length,
-          pendingPlans: data.filter(c => !c.hasPlan).length,
-          activePlans: data.filter(c => c.hasPlan).length
-        });
+            // Mock Stats Calculation (Since 'hasPlan' doesn't exist on users yet)
+            setStats({
+              totalClients: data.length,
+              pendingPlans: data.length, // Assuming everyone needs a plan for now
+              activePlans: 0 
+            });
+        }
 
       } catch (err) {
         console.error("Dietitian Dashboard Error:", err);
@@ -38,7 +51,7 @@ const DietitianDashboard = () => {
     };
 
     fetchData();
-  }, []);
+  }, [navigate]);
 
   return (
     <Layout>

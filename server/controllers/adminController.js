@@ -1,5 +1,6 @@
 const asyncHandler = require('express-async-handler');
 const User = require('../models/User');
+const DietitianProfile = require('../models/DietitianProfile');
 
 // @desc    Get all users
 // @route   GET /api/admin/users
@@ -24,12 +25,28 @@ const deleteUser = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Get all users who have applied to be dietitians
+// @desc    Get all users who have applied (WITH FULL DETAILS)
 // @route   GET /api/admin/applicants
 // @access  Private/Admin
 const getDietitianApplicants = asyncHandler(async (req, res) => {
-  const applicants = await User.find({ dietitianStatus: 'pending' }).select('-password');
-  res.json(applicants);
+  // 1. Find users who are pending
+  const applicants = await User.find({ dietitianStatus: 'pending' }).select('-password').lean();
+  
+  // 2. Find their detailed profiles using their user IDs
+  const applicantIds = applicants.map(a => a._id);
+  const profiles = await DietitianProfile.find({ user: { $in: applicantIds } }).lean();
+
+  // 3. Merge them together so frontend gets one complete object
+  const completeData = applicants.map(user => {
+    // Find the matching profile for this user
+    const profile = profiles.find(p => p.user.toString() === user._id.toString());
+    return { 
+      ...user, 
+      profile: profile || {} // Attach profile details (bio, specialization, etc.)
+    };
+  });
+
+  res.json(completeData);
 });
 
 // @desc    Approve or Reject a dietitian application
@@ -43,7 +60,7 @@ const updateDietitianStatus = asyncHandler(async (req, res) => {
     user.dietitianStatus = status;
 
     if (status === 'approved') {
-      user.role = 'dietitian'; // PROMOTION!
+      user.role = 'dietitian'; 
       user.isVerified = true;
     } else {
       user.role = 'user'; // Revert if rejected
@@ -62,5 +79,5 @@ module.exports = {
   getUsers,
   deleteUser,
   getDietitianApplicants,
-  updateDietitianStatus,
+  updateDietitianStatus
 };
