@@ -16,38 +16,19 @@ const getAllDietitians = asyncHandler(async (req, res) => {
 
   console.log(`📊 Found ${profiles.length} total profiles in DB.`);
 
-  // 2. Filter and LOG why we accept/reject each one
-  const activeDietitians = profiles.filter(p => {
-    // Check 1: Does the profile have a user linked?
-    if (!p.user) {
-      console.log(`❌ Rejecting Profile ${p._id}: No User linked (Orphan)`);
-      return false;
-    }
+  // 👇 CHANGED: We are now sending ALL profiles for debugging purposes.
+  // This ensures your "Pending" dietitians show up on the frontend.
+  res.json(profiles);
 
-    // Check 2: Check status
+  /* // --- OLD FILTERING LOGIC (Commented out for now) ---
+  const activeDietitians = profiles.filter(p => {
+    if (!p.user) return false;
     const isDietitian = p.user.role === 'dietitian';
     const isApproved = p.user.dietitianStatus === 'approved';
-    const isVerified = p.user.isVerified;
-
-    console.log(`🔎 Checking: ${p.user.name}`);
-    console.log(`   - Role: ${p.user.role} (${isDietitian ? 'OK' : 'Not Dietitian'})`);
-    console.log(`   - Status: ${p.user.dietitianStatus} (${isApproved ? 'OK' : 'Not Approved'})`);
-    console.log(`   - Verified: ${isVerified}`);
-
-    // RELAXED FILTER: Accept if Role is Dietitian OR Status is Approved
-    if (isDietitian || isApproved) {
-      console.log("✅ ACCEPTED");
-      return true;
-    } else {
-      console.log("❌ REJECTED: Not a dietitian role and not approved.");
-      return false;
-    }
+    return isDietitian || isApproved;
   });
-
-  console.log(`📤 Sending ${activeDietitians.length} profiles to frontend.`);
-  console.log("-----------------------------------------");
-
   res.json(activeDietitians);
+  */
 });
 
 // @desc    Get dietitian profile by ID

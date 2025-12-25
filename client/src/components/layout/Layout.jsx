@@ -1,7 +1,7 @@
 import React from 'react';
 import Navbar from './Navbar';
 import Footer from './Footer';
-import ChatBot from '../common/ChatBot'; // 👈 Import the ChatBot
+//import ChatBot from '../common/ChatBot'; // 👈 Import the ChatBot
 
 const Layout = ({ children }) => {
   return (
@@ -12,7 +12,7 @@ const Layout = ({ children }) => {
       </main>
       
       {/* 👈 Add ChatBot here, above the Footer */}
-      <ChatBot />
+      {/* <ChatBot /> */}
       
       <Footer />
     </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios'; // 👈 We use axios directly to avoid the 'api' error
+import axios from 'axios'; 
 import { Link } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
 import { Search, Star, ShieldCheck, Clock, ArrowRight, DollarSign, User, Filter } from 'lucide-react';
@@ -13,7 +13,6 @@ const FindDietitians = () => {
     const fetchDietitians = async () => {
       try {
         const BACKEND_URL = "https://smart-diet-full.onrender.com";
-        // ✅ Using axios directly fixes 'api is not defined'
         const { data } = await axios.get(`${BACKEND_URL}/api/dietitians`);
         setDietitians(data);
       } catch (err) {
@@ -26,11 +25,18 @@ const FindDietitians = () => {
     fetchDietitians();
   }, []);
 
-  // Filter logic: Search by Name OR Specialization
-  const filteredDietitians = dietitians.filter((d) => 
-    d.user?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    d.specialization.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // 🛡️ UPDATED Filter Logic: Safe checks for missing data
+  const filteredDietitians = dietitians.filter((d) => {
+    // If a profile exists but has no user linked, skip it
+    if (!d.user) return false;
+
+    // Safely get name and specialization
+    const name = d.user.name ? d.user.name.toLowerCase() : "";
+    const special = d.specialization ? d.specialization.toLowerCase() : "";
+    const term = searchTerm.toLowerCase();
+
+    return name.includes(term) || special.includes(term);
+  });
 
   return (
     <Layout>
