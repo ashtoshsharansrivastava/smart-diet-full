@@ -1,6 +1,6 @@
 const asyncHandler = require("express-async-handler");
 
-// @desc    Process chat message (Gemini 2.0 Flash Version)
+// @desc    Process chat message (Experimental Version)
 // @route   POST /api/chat
 // @access  Public
 const chatWithAI = asyncHandler(async (req, res) => {
@@ -18,10 +18,10 @@ const chatWithAI = asyncHandler(async (req, res) => {
   }
 
   try {
-    // 👇 UPDATED: Using a model CONFIRMED in your list
-    const model = "gemini-2.0-flash";
+    // 👇 UPDATED: "exp" models usually have open Free Tier quotas
+    const model = "gemini-2.0-flash-exp";
     
-    // API Version: v1beta is standard for newer models
+    // API Version: v1beta
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
     const payload = {
@@ -49,6 +49,12 @@ const chatWithAI = asyncHandler(async (req, res) => {
     // Handle Errors
     if (!response.ok) {
       console.error("🔥 Google API Error:", JSON.stringify(data, null, 2));
+      
+      // If 429 (Quota), return a friendly message
+      if (response.status === 429) {
+        return res.status(429).json({ reply: "I'm receiving too many requests right now. Please try again in 30 seconds." });
+      }
+
       return res.status(500).json({ 
         reply: "I am having trouble connecting to the AI. Please try again." 
       });
