@@ -5,61 +5,65 @@ const User = require('./models/User');
 const DietitianProfile = require('./models/DietitianProfile');
 const connectDB = require('./config/db');
 
-// 👇 YOUR EMAIL
+// 👇 YOUR EMAIL (Verify this is correct)
 const TARGET_EMAIL = "csjma22001390176ece@csjmu.ac.in"; 
 
 const seedProfile = async () => {
   await connectDB();
 
   try {
+    // 1. Find User
     const user = await User.findOne({ email: TARGET_EMAIL });
     if (!user) {
-      console.log("❌ User not found!");
+      console.log("❌ User not found! Check the email.");
       process.exit(1);
     }
+    console.log(`✅ Found User: ${user.name}`);
 
-    // 1. Ensure User Role is Perfect
+    // 2. Ensure User Role is set correctly
     user.role = 'dietitian';
     user.dietitianStatus = 'approved';
     user.isVerified = true;
-    // Set a Demo Avatar if none exists
+    
+    // Fix Avatar if missing (Frontend needs this to look good)
     if (!user.avatar || user.avatar.length < 10) {
-        user.avatar = "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=500";
+       user.avatar = "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=500";
     }
     await user.save();
-    console.log("✅ User Role & Avatar updated.");
+    console.log("✅ User Role & Avatar secured.");
 
-    // 2. Find or Create Profile
+    // 3. Find OR Create Profile
     let profile = await DietitianProfile.findOne({ user: user._id });
     
-    // 👇 DATA TO FORCE UPDATE
-    const profileData = {
+    // Data to inject
+    const expertData = {
         user: user._id,
-        specialization: "Clinical Nutrition & Metabolism",
+        specialization: "Clinical Nutrition & Metabolism", // 👈 Crucial for search filter
         experience: 5,
-        bio: "Expert in metabolic health and personalized diet protocols. I help clients achieve their health goals through science-backed nutrition.",
+        bio: "Certified metabolic specialist helping clients reverse lifestyle diseases through precision nutrition.",
         hourlyRate: 1500,
-        rating: 5.0,
-        reviewCount: 12,
-        availability: ["Monday", "Wednesday", "Friday"]
+        rating: 4.9,
+        reviewCount: 15,
+        availability: ["Mon", "Wed", "Fri"]
     };
 
     if (!profile) {
-      profile = new DietitianProfile(profileData);
+      // Create New
+      profile = new DietitianProfile(expertData);
       console.log("🎉 Created NEW Profile.");
     } else {
-      // 👇 FORCE UPDATE EXISTING FIELDS
-      profile.specialization = profileData.specialization;
-      profile.experience = profileData.experience;
-      profile.bio = profileData.bio;
-      profile.hourlyRate = profileData.hourlyRate;
-      profile.rating = profileData.rating;
-      profile.reviewCount = profileData.reviewCount;
-      console.log("🔄 Updated EXISTING Profile with Demo Data.");
+      // FORCE UPDATE (This fixes the 'Wrong Data' issue)
+      profile.specialization = expertData.specialization;
+      profile.experience = expertData.experience;
+      profile.bio = expertData.bio;
+      profile.hourlyRate = expertData.hourlyRate;
+      profile.rating = expertData.rating;
+      
+      console.log("🔄 Overwriting OLD profile with NEW data...");
     }
     
     await profile.save();
-    console.log("✅ SUCCESS! Profile is live and verified.");
+    console.log("✅ SUCCESS! The backend now has the correct data.");
 
   } catch (error) {
     console.error("❌ Error:", error);
