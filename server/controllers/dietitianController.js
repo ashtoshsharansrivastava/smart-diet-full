@@ -3,7 +3,7 @@ const User = require('../models/User');
 const DietitianProfile = require('../models/DietitianProfile');
 const Review = require('../models/Review');
 
-// @desc    Get all verified dietitians (DEBUG MODE)
+// @desc    Get all verified dietitians (DEBUG MODE: RETURNS ALL)
 // @route   GET /api/dietitians
 // @access  Public
 const getAllDietitians = asyncHandler(async (req, res) => {
@@ -16,19 +16,9 @@ const getAllDietitians = asyncHandler(async (req, res) => {
 
   console.log(`📊 Found ${profiles.length} total profiles in DB.`);
 
-  // 👇 CHANGED: We are now sending ALL profiles for debugging purposes.
-  // This ensures your "Pending" dietitians show up on the frontend.
+  // 👇 CHANGED: Directly return ALL profiles for debugging.
+  // This bypasses the 'pending' check so you can see your new user.
   res.json(profiles);
-
-  /* // --- OLD FILTERING LOGIC (Commented out for now) ---
-  const activeDietitians = profiles.filter(p => {
-    if (!p.user) return false;
-    const isDietitian = p.user.role === 'dietitian';
-    const isApproved = p.user.dietitianStatus === 'approved';
-    return isDietitian || isApproved;
-  });
-  res.json(activeDietitians);
-  */
 });
 
 // @desc    Get dietitian profile by ID

@@ -12,6 +12,7 @@ const FindDietitians = () => {
   useEffect(() => {
     const fetchDietitians = async () => {
       try {
+        // Ensure this points to your PRODUCTION URL
         const BACKEND_URL = "https://smart-diet-full.onrender.com";
         const { data } = await axios.get(`${BACKEND_URL}/api/dietitians`);
         setDietitians(data);
@@ -25,12 +26,12 @@ const FindDietitians = () => {
     fetchDietitians();
   }, []);
 
-  // 🛡️ UPDATED Filter Logic: Safe checks for missing data
+  // 🛡️ UPDATED SAFE FILTER LOGIC
   const filteredDietitians = dietitians.filter((d) => {
-    // If a profile exists but has no user linked, skip it
+    // 1. Safety Check: If profile has no user linked, hide it (don't crash)
     if (!d.user) return false;
 
-    // Safely get name and specialization
+    // 2. Safe Text Matching
     const name = d.user.name ? d.user.name.toLowerCase() : "";
     const special = d.specialization ? d.specialization.toLowerCase() : "";
     const term = searchTerm.toLowerCase();
