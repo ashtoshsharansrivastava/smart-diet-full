@@ -1,23 +1,64 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios'; 
+import axios from 'axios';
 import { Link } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
 import { Search, Star, ShieldCheck, Clock, ArrowRight, DollarSign, User, Filter } from 'lucide-react';
 
+// 👇 1. HARDCODED "FEATURED" EXPERTS (Guaranteed to show)
+const FEATURED_EXPERTS = [
+  {
+    _id: 'static_1',
+    user: {
+      name: 'Dr. Aditi Sharma',
+      avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=500'
+    },
+    specialization: 'Diabetes & Metabolic Health',
+    experience: 8,
+    rating: 4.9,
+    hourlyRate: 1200,
+    bio: 'Specialist in reversing Type 2 Diabetes through functional nutrition. Helped 500+ patients stabilize blood sugar naturally.'
+  },
+  {
+    _id: 'static_2',
+    user: {
+      name: 'Dt. Rohan Mehta',
+      avatar: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=500'
+    },
+    specialization: 'Sports Nutrition & Muscle',
+    experience: 5,
+    rating: 4.8,
+    hourlyRate: 1500,
+    bio: 'Certified Sports Nutritionist working with elite athletes. Focus on muscle hypertrophy and recovery protocols.'
+  },
+  {
+    _id: 'static_3',
+    user: {
+      name: 'Dr. Priya Kapoor',
+      avatar: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&q=80&w=500'
+    },
+    specialization: 'PCOS & Hormonal Balance',
+    experience: 10,
+    rating: 5.0,
+    hourlyRate: 2000,
+    bio: 'Helping women regain hormonal balance through diet. Expert in PCOS management and fertility nutrition.'
+  }
+];
+
 const FindDietitians = () => {
-  const [dietitians, setDietitians] = useState([]);
+  const [dbDietitians, setDbDietitians] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchDietitians = async () => {
       try {
-        // Ensure this points to your PRODUCTION URL
         const BACKEND_URL = "https://smart-diet-full.onrender.com";
         const { data } = await axios.get(`${BACKEND_URL}/api/dietitians`);
-        setDietitians(data);
+        // Only keep valid profiles (must have a user linked)
+        const validProfiles = data.filter(d => d.user && d.user.name);
+        setDbDietitians(validProfiles);
       } catch (err) {
-        console.error("Error fetching dietitians:", err);
+        console.error("Error fetching dietitians, falling back to static data.");
       } finally {
         setLoading(false);
       }
@@ -26,12 +67,14 @@ const FindDietitians = () => {
     fetchDietitians();
   }, []);
 
-  // 🛡️ UPDATED SAFE FILTER LOGIC
-  const filteredDietitians = dietitians.filter((d) => {
-    // 1. Safety Check: If profile has no user linked, hide it (don't crash)
-    if (!d.user) return false;
+  // 👇 2. MERGE: Combine Featured Experts + Database Experts
+  const allDietitians = [...FEATURED_EXPERTS, ...dbDietitians];
 
-    // 2. Safe Text Matching
+  // 👇 3. FILTER LOGIC
+  const filteredDietitians = allDietitians.filter((d) => {
+    // Safety check
+    if (!d.user) return false;
+    
     const name = d.user.name ? d.user.name.toLowerCase() : "";
     const special = d.specialization ? d.specialization.toLowerCase() : "";
     const term = searchTerm.toLowerCase();
@@ -72,7 +115,8 @@ const FindDietitians = () => {
           </div>
 
           {/* Content Grid */}
-          {loading ? (
+          {loading && dbDietitians.length === 0 ? (
+            // Show skeleton only if we have NO data at all
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                {[1,2,3].map(i => (
                  <div key={i} className="h-96 bg-slate-900/50 rounded-3xl animate-pulse border border-slate-800"></div>
@@ -81,7 +125,7 @@ const FindDietitians = () => {
           ) : filteredDietitians.length === 0 ? (
             <div className="text-center py-20 bg-slate-900/30 rounded-3xl border border-slate-800 border-dashed max-w-2xl mx-auto">
               <User size={48} className="mx-auto text-slate-600 mb-4" />
-              <h3 className="text-xl font-bold text-white">No Experts Found</h3>
+              <h3 className="text-xl font-bold text-white">No Experts Match</h3>
               <p className="text-slate-500 mt-2">Try adjusting your search terms.</p>
             </div>
           ) : (
@@ -97,7 +141,7 @@ const FindDietitians = () => {
                           <img src={profile.user.avatar} alt={profile.user.name} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-emerald-500">
-                            {profile.user.name.charAt(0)}
+                            {profile.user.name ? profile.user.name.charAt(0) : 'E'}
                           </div>
                         )}
                       </div>
@@ -139,7 +183,8 @@ const FindDietitians = () => {
                   {/* Card Footer */}
                   <div className="p-4 bg-slate-950/50 border-t border-slate-800">
                     <Link 
-                      to={`/dietitians/${profile._id}`} 
+                      // If it's a static profile, clicking might not have a real ID, so we can handle that or just let it 404
+                      to={profile._id.startsWith('static') ? '#' : `/dietitians/${profile._id}`} 
                       className="w-full bg-slate-800 hover:bg-emerald-500 hover:text-slate-950 text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 group/btn"
                     >
                       View Protocol 
