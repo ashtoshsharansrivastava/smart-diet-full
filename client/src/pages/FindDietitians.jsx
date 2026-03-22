@@ -13,9 +13,13 @@ const FindDietitians = () => {
   useEffect(() => {
     const fetchDietitians = async () => {
       try {
-        const BACKEND_URL = "https://smart-diet-full.onrender.com";
+        // 👇 CHANGED: Pointing to your local backend for testing
+        const BACKEND_URL = "http://localhost:5000"; 
         const { data } = await axios.get(`${BACKEND_URL}/api/dietitians`);
         
+        // 👇 ADDED: This will print the database response to your browser console
+        console.log("Raw backend data:", data);
+
         // Only show valid profiles
         const validProfiles = data.filter(d => d.user && d.user.name);
         setDietitians(validProfiles);
